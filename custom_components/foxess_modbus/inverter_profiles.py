@@ -94,6 +94,10 @@ H3_SMART_REGISTERS = SpecialRegisterConfig(
     invalid_register_ranges=[(41001, 41006), (41012, 41013), (41015, 41015)],
     individual_read_register_ranges=[(37609, 37620), (37632, 37636)],
 )
+# EVO BMS pack registers use the same 37xxx block as H3 SMART
+EVO_REGISTERS = SpecialRegisterConfig(
+    individual_read_register_ranges=[(37609, 37636)],
+)
 # See https://github.com/nathanmarlor/foxess_modbus/pull/512
 KH_REGISTERS = SpecialRegisterConfig(
     invalid_register_ranges=[(41001, 41006), (41012, 41012), (41019, 43999), (31055, 31999)],
@@ -462,6 +466,7 @@ _INVERTER_PROFILES_LIST = [
         ConnectionType.AUX,
         RegisterType.HOLDING,
         versions={None: Inv.EVO},
+        special_registers=EVO_REGISTERS,
     ),
 ]
 

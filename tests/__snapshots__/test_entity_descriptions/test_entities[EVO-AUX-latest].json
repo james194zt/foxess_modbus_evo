@@ -1,10 +1,20 @@
 [
   {
     "addresses": [
-      39142
+      37618
     ],
     "key": "ambtemp",
     "name": "Ambient Temp",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37610
+    ],
+    "key": "bat_current_1",
+    "name": "Battery 1 Current",
     "scale": 0.1,
     "signed": true,
     "type": "sensor"
@@ -55,6 +65,20 @@
   },
   {
     "addresses": [
+      39606,
+      39605,
+      39610,
+      39609,
+      37632
+    ],
+    "key": "battery_cycles",
+    "name": "Battery Cycles",
+    "scale": 0.01,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39238,
       39237
     ],
@@ -99,11 +123,113 @@
   },
   {
     "addresses": [
-      39423
+      37612,
+      37632
+    ],
+    "key": "battery_kwh_remaining",
+    "name": "Battery kWh Remaining",
+    "scale": 0.01,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37612
+    ],
+    "key": "battery_soc_1",
+    "name": "Battery 1 SoC",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37624
     ],
     "key": "battery_soh",
     "name": "Battery SoH",
     "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      39231,
+      39230
+    ],
+    "key": "battery_status",
+    "name": "Battery Status",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37611
+    ],
+    "key": "battery_temp_1",
+    "name": "Battery 1 Temp",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37609
+    ],
+    "key": "batvolt_1",
+    "name": "Battery 1 Voltage",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37619
+    ],
+    "key": "bms_cell_mv_high_1",
+    "name": "BMS 1 Cell mV High",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37620
+    ],
+    "key": "bms_cell_mv_low_1",
+    "name": "BMS 1 Cell mV Low",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37617
+    ],
+    "key": "bms_cell_temp_high_1",
+    "name": "BMS 1 Cell Temp High",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37618
+    ],
+    "key": "bms_cell_temp_low_1",
+    "name": "BMS 1 Cell Temp Low",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37632
+    ],
+    "key": "bms_kwh_remaining_1",
+    "name": "BMS 1 Nominal Capacity",
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -115,6 +241,17 @@
     "name": "EPS Frequency",
     "scale": 0.01,
     "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      39213,
+      39212
+    ],
+    "key": "eps_power_R",
+    "name": "EPS Power R",
+    "scale": 0.001,
+    "signed": true,
     "type": "sensor"
   },
   {
@@ -265,18 +402,17 @@
     ],
     "key": "inv_power",
     "name": "Inverter Power",
-    "scale": 1e-06,
+    "scale": 0.001,
     "signed": true,
     "type": "sensor"
   },
   {
     "addresses": [
-      39229,
-      39228
+      37610
     ],
     "key": "invbatcurrent_1",
     "name": "Inverter Battery 1 Current",
-    "scale": 0.001,
+    "scale": 0.1,
     "signed": true,
     "type": "sensor"
   },
@@ -340,6 +476,39 @@
     ],
     "key": "load_power",
     "name": "Load Power",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      39220,
+      39219
+    ],
+    "key": "load_power_R",
+    "name": "Load Power R",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      39222,
+      39221
+    ],
+    "key": "load_power_S",
+    "name": "Load Power S",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      39224,
+      39223
+    ],
+    "key": "load_power_T",
+    "name": "Load Power T",
     "scale": 0.001,
     "signed": true,
     "type": "sensor"
@@ -630,7 +799,7 @@
   },
   {
     "addresses": [
-      41001
+      48010
     ],
     "key": "time_period_1_enable_charge_from_grid",
     "name": "Period 1 - Enable Charge from Grid",
@@ -638,36 +807,36 @@
   },
   {
     "end_addresses": [
-      41003
+      48012
     ],
     "key": "time_period_1_enable_force_charge",
     "name": "Period 1 - Enable Force Charge",
     "start_addresses": [
-      41002
+      48011
     ],
     "type": "charge-period-enabled"
   },
   {
     "addresses": [
-      41003
+      48012
     ],
     "key": "time_period_1_end",
     "name": "Period 1 - End",
-    "other_addresses": 41002,
+    "other_addresses": 48011,
     "type": "charge-period-time"
   },
   {
     "addresses": [
-      41002
+      48011
     ],
     "key": "time_period_1_start",
     "name": "Period 1 - Start",
-    "other_addresses": 41003,
+    "other_addresses": 48012,
     "type": "charge-period-time"
   },
   {
     "addresses": [
-      41004
+      48020
     ],
     "key": "time_period_2_enable_charge_from_grid",
     "name": "Period 2 - Enable Charge from Grid",
@@ -675,31 +844,31 @@
   },
   {
     "end_addresses": [
-      41006
+      48022
     ],
     "key": "time_period_2_enable_force_charge",
     "name": "Period 2 - Enable Force Charge",
     "start_addresses": [
-      41005
+      48021
     ],
     "type": "charge-period-enabled"
   },
   {
     "addresses": [
-      41006
+      48022
     ],
     "key": "time_period_2_end",
     "name": "Period 2 - End",
-    "other_addresses": 41005,
+    "other_addresses": 48021,
     "type": "charge-period-time"
   },
   {
     "addresses": [
-      41005
+      48021
     ],
     "key": "time_period_2_start",
     "name": "Period 2 - Start",
-    "other_addresses": 41006,
+    "other_addresses": 48022,
     "type": "charge-period-time"
   },
   {
@@ -734,6 +903,7 @@
     "values": {
       "1": "Self Use",
       "2": "Feed-in First",
+      "255": "Remote Control",
       "3": "Back-up",
       "4": "Peak Shaving"
     }
