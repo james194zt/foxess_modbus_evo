@@ -8,27 +8,20 @@
 
 ## Introduction
 
-A Home Assistant custom component which communicates with FoxESS H-series inverters and derivatives without using FoxESS's cloud.
+A Home Assistant custom component which communicates with FoxESS inverters locally via Modbus (no cloud).
 
-This means that you're not reliant on FoxESS's cloud infrastructure, so HA keeps working when the cloud goes down.
-You can also read solar production etc in real-time, rather than once every 5 minutes.
+**This fork** ([james194zt/foxess_modbus_evo](https://github.com/james194zt/foxess_modbus_evo)) adds **FoxESS EVO 10-H** support on the markybry register map: charge periods **48010–48023**, BMS pack sensors (**37609–37632**), corrected SOC/SoH, EPS/load power, and computed remaining kWh. See [docs/INSTALL_HA.md](docs/INSTALL_HA.md) for Raspberry Pi / HA OS install steps.
 
-Depending on your inverter model, you can also set charge periods, work mode, min/max SoC.
-See [Supported Features](https://github.com/nathanmarlor/foxess_modbus/wiki/Supported-Features).
+HA domain: **`foxess_modbus`** — integration name **FoxESS - Modbus** (not `foxess_modbus_evo`).
 
-Supported models:
+Supported models include:
 
+- FoxESS **EVO 10-H** (this fork)
 - FoxESS H1 (including AC1, AIO-H1 and G2)
-- FoxESS H3 (including AC3 and AOI-H3)
-- FoxESS H3 PRO
+- FoxESS H3 (including AC3 and AIO-H3)
+- FoxESS H3 PRO / SMART
 - FoxESS KH
-- Kuara H3
-- Sonnenkraft SK-HWR
-- STAR
-- Solavita SP
-- a-TroniX AX
-- Enpal
-- 1KOMMA5°
+- Kuara H3, Sonnenkraft SK-HWR, STAR, Solavita SP, a-TroniX AX, Enpal, 1KOMMA5°
 
 You will need a direct connection to your inverter.
 In most cases, this means buying a modbus to ethernet/USB adapter and wiring this to a port on your inverter.
@@ -38,20 +31,21 @@ See the documentation for details.
 
 ## Installation
 
-[![Quick installation link](https://my.home-assistant.io/badges/hacs_repository.svg)][my-hacs]
+### HACS (recommended on Home Assistant OS / Raspberry Pi)
 
-Migrating from StealthChesnut's HA-FoxESS-Modbus? [Read this](https://github.com/nathanmarlor/foxess_modbus/wiki/Migrating-from-HA-FoxESS-Modbus).
+This fork installs from **source** (no `zip_release`) so commit-based testing works without a GitHub release zip. Upstream uses tagged zip releases instead — see [docs/FORK_HACS.md](docs/FORK_HACS.md). Contributing EVO changes back upstream: [docs/UPSTREAM_PR.md](docs/UPSTREAM_PR.md).
 
-Recommended installation is through [HACS][hacs]:
+1. HACS → **⋮** → **Custom repositories**
+2. URL: `https://github.com/james194zt/foxess_modbus_evo` — category **Integration**
+3. Install **FoxESS - Modbus**, restart Home Assistant
+4. **Settings → Devices & services → Add integration → FoxESS - Modbus**
+5. EVO 10-H: connection **AUX**, holding registers
 
-1. Either [use this link][my-hacs], or navigate to HACS integration and:
-   - 'Explore & Download Repositories'
-   - Search for 'FoxESS - Modbus'
-   - Download
-2. Restart Home Assistant
-3. Go to Settings > Devices and Services > Add Integration
-4. Search for and select 'FoxESS - Modbus' (If the integration is not found, empty your browser cache and reload the page)
-5. Proceed with the configuration
+Manual copy: see [docs/INSTALL_HA.md](docs/INSTALL_HA.md).
+
+### Upstream HACS
+
+For non-EVO inverters, the original [nathanmarlor/foxess_modbus](https://github.com/nathanmarlor/foxess_modbus) HACS entry may suffice.
 
 ## Usage
 
