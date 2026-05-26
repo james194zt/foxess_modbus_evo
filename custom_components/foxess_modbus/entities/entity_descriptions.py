@@ -26,6 +26,7 @@ from .modbus_fault_sensor import H3_PRO_KH_133_FAULTS
 from .modbus_fault_sensor import STANDARD_FAULTS
 from .modbus_fault_sensor import FaultSet
 from .modbus_fault_sensor import ModbusFaultSensorDescription
+from .modbus_grid_status_sensor import ModbusGridStatusSensorDescription
 from .modbus_integration_sensor import ModbusIntegrationSensorDescription
 from .modbus_inverter_state_sensor import H1_INVERTER_STATES
 from .modbus_inverter_state_sensor import KH_INVERTER_STATES
@@ -34,6 +35,9 @@ from .modbus_inverter_state_sensor import ModbusInverterStateSensorDescription
 from .modbus_lambda_sensor import ModbusLambdaSensorDescription
 from .modbus_number import ModbusNumberDescription
 from .modbus_sensor import ModbusSensorDescription
+from .modbus_binary_sensor import ModbusBinarySensorDescription
+from .modbus_string_sensor import ModbusProtocolVersionSensorDescription
+from .modbus_string_sensor import ModbusStringSensorDescription
 from .modbus_version_sensor import ModbusVersionSensorDescription
 from .modbus_work_mode_select import ModbusWorkModeSelectDescription
 from .remote_control_description import REMOTE_CONTROL_DESCRIPTION
@@ -134,6 +138,58 @@ def _version_entities() -> Iterable[EntityFactory]:
         ],
         is_hex=True,
     )
+
+
+def _identity_entities() -> Iterable[EntityFactory]:
+    """PCS / BMS identity from EVO holding registers (Fox app parity where confirmed)."""
+    yield ModbusStringSensorDescription(
+        key="pcs_model_name",
+        address=[ModbusAddressSpec(holding=39002, models=Inv.EVO)],
+        name="PCS Model",
+        icon="mdi:solar-power",
+        register_count=16,
+    )
+    yield ModbusStringSensorDescription(
+        key="pcs_serial_number",
+        address=[ModbusAddressSpec(holding=39018, models=Inv.EVO)],
+        name="PCS Serial Number",
+        icon="mdi:barcode",
+        register_count=16,
+    )
+    yield ModbusProtocolVersionSensorDescription(
+        key="modbus_protocol_version",
+        address=[ModbusAddressSpec(holding=39000, models=Inv.EVO)],
+        name="Modbus Protocol Version",
+        icon="mdi:protocol",
+    )
+    yield ModbusBinarySensorDescription(
+        key="bms_online",
+        address=[ModbusAddressSpec(holding=37002, models=Inv.EVO)],
+        name="BMS Online",
+        icon_func=lambda on: "mdi:battery-check" if on else "mdi:battery-off",
+    )
+    yield ModbusStringSensorDescription(
+        key="bms_pack_serial_modbus",
+        address=[ModbusAddressSpec(holding=37097, models=Inv.EVO)],
+        name="BMS Pack Serial (Modbus)",
+        icon="mdi:battery",
+        register_count=16,
+    )
+    yield ModbusSensorDescription(
+        key="bms_pack_count",
+        addresses=[ModbusAddressSpec(holding=37032, models=Inv.EVO)],
+        name="BMS Pack Count",
+        signed=False,
+        icon="mdi:battery-heart",
+    )
+    for pack_index, holding in enumerate((37033, 37034, 37035, 37036), start=1):
+        yield ModbusVersionSensorDescription(
+            key=f"bms_pack_{pack_index}_version",
+            address=[ModbusAddressSpec(holding=holding, models=Inv.EVO)],
+            name=f"BMS Pack {pack_index} Version",
+            is_hex=True,
+            icon="mdi:battery-sync",
+        )
 
 
 def _pv_entities() -> Iterable[EntityFactory]:
@@ -811,6 +867,35 @@ def _h1_current_voltage_power_entities() -> Iterable[EntityFactory]:
             ModbusAddressesSpec(holding=[39169, 39168], models=Inv.KH_133 | Inv.EVO),
         ],
         scale=0.001,
+    )
+
+    def _grid_status(
+        addresses: list[ModbusAddressesSpec], scale: float, *, invert_sign: bool = False
+    ) -> ModbusGridStatusSensorDescription:
+        return ModbusGridStatusSensorDescription(
+            key="grid_status",
+            addresses=addresses,
+            name="Grid Status",
+            icon="mdi:transmission-tower",
+            scale=scale,
+            invert_sign=invert_sign,
+        )
+
+    yield _grid_status(
+        addresses=[ModbusAddressesSpec(holding=[39169, 39168], models=Inv.EVO)],
+        scale=0.001,
+    )
+    yield _grid_status(
+        addresses=[
+            ModbusAddressesSpec(input=[11021], models=Inv.H1_G1),
+            ModbusAddressesSpec(holding=[31014], models=Inv.H1_G1 | Inv.H1_LAN | Inv.H1_G2_SET),
+        ],
+        scale=0.001,
+    )
+    yield _grid_status(
+        addresses=[ModbusAddressesSpec(holding=[39169, 39168], models=Inv.KH_133)],
+        scale=0.001,
+        invert_sign=True,
     )
     yield from _grid_ct(
         addresses=[
@@ -1837,7 +1922,9 @@ def _inverter_entities() -> Iterable[EntityFactory]:
     yield ModbusG2InverterStateSensorDescription(
         key="inverter_state",
         addresses=[
-            ModbusAddressesSpec(holding=[39063, 39065], models=Inv.H1_G2_SET | Inv.H3_PRO_SET | Inv.H3_SMART),
+            ModbusAddressesSpec(
+                holding=[39063, 39065], models=Inv.H1_G2_SET | Inv.H3_PRO_SET | Inv.H3_SMART | Inv.EVO
+            ),
         ],
         name="Inverter State",
     )
@@ -3089,6 +3176,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
 ENTITIES: list[EntityFactory] = sorted(
     itertools.chain(
         _version_entities(),
+        _identity_entities(),
         _pv_entities(),
         _h1_current_voltage_power_entities(),
         _h3_current_voltage_power_entities(),

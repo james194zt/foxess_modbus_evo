@@ -235,6 +235,84 @@
   },
   {
     "addresses": [
+      37002
+    ],
+    "key": "bms_online",
+    "name": "BMS Online",
+    "type": "binary-sensor"
+  },
+  {
+    "addresses": [
+      37033
+    ],
+    "is_hex": true,
+    "key": "bms_pack_1_version",
+    "name": "BMS Pack 1 Version",
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37034
+    ],
+    "is_hex": true,
+    "key": "bms_pack_2_version",
+    "name": "BMS Pack 2 Version",
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37035
+    ],
+    "is_hex": true,
+    "key": "bms_pack_3_version",
+    "name": "BMS Pack 3 Version",
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37036
+    ],
+    "is_hex": true,
+    "key": "bms_pack_4_version",
+    "name": "BMS Pack 4 Version",
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37032
+    ],
+    "key": "bms_pack_count",
+    "name": "BMS Pack Count",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37097,
+      37098,
+      37099,
+      37100,
+      37101,
+      37102,
+      37103,
+      37104,
+      37105,
+      37106,
+      37107,
+      37108,
+      37109,
+      37110,
+      37111,
+      37112
+    ],
+    "key": "bms_pack_serial_modbus",
+    "name": "BMS Pack Serial (Modbus)",
+    "register_count": 16,
+    "type": "string_sensor"
+  },
+  {
+    "addresses": [
       39218
     ],
     "key": "eps_frequency",
@@ -354,6 +432,18 @@
   },
   {
     "addresses": [
+      39169,
+      39168
+    ],
+    "invert_sign": false,
+    "key": "grid_status",
+    "name": "Grid Status",
+    "scale": 0.001,
+    "signed": true,
+    "type": "grid_status_sensor"
+  },
+  {
+    "addresses": [
       39123
     ],
     "key": "grid_voltage_R",
@@ -450,6 +540,15 @@
   },
   {
     "addresses": [
+      39063,
+      39065
+    ],
+    "key": "inverter_state",
+    "name": "Inverter State",
+    "type": "inverter-state-sensor"
+  },
+  {
+    "addresses": [
       39141
     ],
     "key": "invtemp",
@@ -541,6 +640,63 @@
     "key": "master_version",
     "name": "Version: Master",
     "type": "sensor"
+  },
+  {
+    "addresses": [
+      39000,
+      39001
+    ],
+    "key": "modbus_protocol_version",
+    "name": "Modbus Protocol Version",
+    "type": "protocol_version_sensor"
+  },
+  {
+    "addresses": [
+      39002,
+      39003,
+      39004,
+      39005,
+      39006,
+      39007,
+      39008,
+      39009,
+      39010,
+      39011,
+      39012,
+      39013,
+      39014,
+      39015,
+      39016,
+      39017
+    ],
+    "key": "pcs_model_name",
+    "name": "PCS Model",
+    "register_count": 16,
+    "type": "string_sensor"
+  },
+  {
+    "addresses": [
+      39018,
+      39019,
+      39020,
+      39021,
+      39022,
+      39023,
+      39024,
+      39025,
+      39026,
+      39027,
+      39028,
+      39029,
+      39030,
+      39031,
+      39032,
+      39033
+    ],
+    "key": "pcs_serial_number",
+    "name": "PCS Serial Number",
+    "register_count": 16,
+    "type": "string_sensor"
   },
   {
     "addresses": [
