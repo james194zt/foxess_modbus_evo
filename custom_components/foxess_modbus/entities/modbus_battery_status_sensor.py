@@ -98,22 +98,24 @@ class ModbusBatteryStatusSensor(ModbusEntityMixin, SensorEntity):
     @property
     def native_value(self) -> str | None:
         bms_connect_state = self._controller.read(self._bms_connect_state_address, signed=False)
-        if bms_connect_state == 0 or bms_connect_state == 2:
+        # 0: initial, 1: OK, 2: NG — only NG suppresses status; EVO may sit at 0 while power is valid.
+        if bms_connect_state == 2:
             return None
 
         power_raw = self._controller.read(self._power_address, signed=True)
         if power_raw is None:
             return None
 
+        power_kw = power_raw * self._power_scale
+        # Validate in kW (same as invbatpower), not raw register units.
         if not self._validate(
             [Range(-100, 100)],
-            power_raw,
+            power_kw,
             power_raw,
             address_override=self._power_address[0],
         ):
             return None
 
-        power_kw = power_raw * self._power_scale
         if power_kw > self._power_threshold_kw:
             return "Discharging"
         if power_kw < -self._power_threshold_kw:
