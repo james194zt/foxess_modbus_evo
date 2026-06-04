@@ -185,6 +185,27 @@ def _ordered_charge_period_writes(
     return ordered
 
 
+def _build_contiguous_write(writes: list[tuple[int, int]]) -> tuple[int, list[int]]:
+    """Pack register writes into one FC16 block."""
+    write_start_address = min(w[0] for w in writes)
+    write_end_address = max(w[0] for w in writes)
+    write_values: list[int | None] = [None] * (write_end_address - write_start_address + 1)
+    for address, value in writes:
+        write_values[address - write_start_address] = value
+    if any(x is None for x in write_values):
+        raise ValueError(f"Incomplete charge-period write block: {writes}")
+    return write_start_address, write_values  # type: ignore[return-value]
+
+
+def _without_mode_register(
+    writes: list[tuple[int, int]],
+    mode_address: int | None,
+) -> list[tuple[int, int]]:
+    if mode_address is None:
+        return writes
+    return [(address, value) for address, value in writes if address != mode_address]
+
+
 async def _write_registers_one_by_one(
     controller: ModbusController,
     writes: list[tuple[int, int]],
@@ -208,37 +229,38 @@ async def _write_charge_period_registers(
     evo_style: bool,
     addresses: Any,
 ) -> None:
-    """Write one charge period. EVO always uses ordered single-register writes."""
+    """Write one charge period. EVO needs a contiguous FC16 block at 48010/48020."""
     diagnostics = _charge_period_diagnostics(controller, addresses)
-    ordered = _ordered_charge_period_writes(writes, evo_style=evo_style)
+    mode_address = addresses.mode_address
 
-    if evo_style:
-        await _write_registers_one_by_one(controller, ordered, diagnostics=diagnostics)
-        return
+    if evo_style and mode_address is not None and controller.read(mode_address, signed=False) is None:
+        writes = _without_mode_register(writes, mode_address)
 
-    write_start_address = min(w[0] for w in writes)
-    write_end_address = max(w[0] for w in writes)
-    write_values: list[int] = [None] * (write_end_address - write_start_address + 1)  # type: ignore
-
-    for address, value in writes:
-        i = address - write_start_address
-        write_values[i] = value
-
-    assert not any(x for x in write_values if x is None)
+    async def _try_batch(batch: list[tuple[int, int]]) -> None:
+        start, values = _build_contiguous_write(batch)
+        await controller.write_registers(start, values)
 
     try:
-        await controller.write_registers(write_start_address, write_values)
-    except Exception as ex:
+        await _try_batch(writes)
+        return
+    except (ModbusIOException, ModbusClientFailedError) as ex:
         if not _is_illegal_address_error(ex):
             raise
-        _LOGGER.warning(
-            "Batch charge-period write at %s failed (%s); retrying register-by-register",
-            write_start_address,
-            ex,
-        )
-        await _write_registers_one_by_one(
-            controller, sorted(writes, key=lambda item: item[0]), diagnostics=diagnostics
-        )
+        _LOGGER.warning("Batch charge-period write failed (%s)", ex)
+
+    if evo_style and mode_address is not None:
+        writes_no_mode = _without_mode_register(writes, mode_address)
+        if len(writes_no_mode) < len(writes):
+            try:
+                await _try_batch(writes_no_mode)
+                return
+            except (ModbusIOException, ModbusClientFailedError) as ex:
+                if not _is_illegal_address_error(ex):
+                    raise
+                _LOGGER.warning("Batch charge-period write without mode register failed (%s)", ex)
+
+    ordered = _ordered_charge_period_writes(writes, evo_style=evo_style)
+    await _write_registers_one_by_one(controller, ordered, diagnostics=diagnostics)
 
 
 async def _update_all_charge_periods(
