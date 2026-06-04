@@ -142,8 +142,18 @@ class ChargePeriod:
     end: time
 
 
+
 def _is_illegal_address_error(err: BaseException) -> bool:
     return "IllegalAddress" in str(err)
+
+
+def _without_mode_register(
+    writes: list[tuple[int, int]],
+    mode_address: int | None,
+) -> list[tuple[int, int]]:
+    if mode_address is None:
+        return writes
+    return [(address, value) for address, value in writes if address != mode_address]
 
 
 def _charge_period_diagnostics(
@@ -185,7 +195,8 @@ async def _write_contiguous_registers(
         raise HomeAssistantError(
             f"Charge-period write failed at {write_start_address} values {write_values}: {ex}.{detail} "
             "Charge-period entities are read-only in HA — use foxess_modbus.update_all_charge_periods. "
-            "If IllegalAddress persists, disable Fox app Mode Scheduler."
+            "If IllegalAddress persists, your firmware may not support writing charge periods via Modbus "
+            "(mode @48013 unreadable is common on EVO 10-H)."
         ) from ex
 
 
@@ -302,17 +313,36 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
             ),
         ]
         if config.addresses.mode_address is not None:
-            mode_value = (
-                config.addresses.mode_charge_value
-                if charge_period.enable_charge_from_grid
-                else config.addresses.mode_no_charge_value
-            )
-            writes.append((config.addresses.mode_address, mode_value))
+            mode_readable = controller.read(config.addresses.mode_address, signed=False) is not None
+            if mode_readable:
+                mode_value = (
+                    config.addresses.mode_charge_value
+                    if charge_period.enable_charge_from_grid
+                    else config.addresses.mode_no_charge_value
+                )
+                writes.append((config.addresses.mode_address, mode_value))
+            else:
+                _LOGGER.info(
+                    "Skipping charge-period mode register %s (unreadable on this firmware)",
+                    config.addresses.mode_address,
+                )
 
         try:
             await _write_contiguous_registers(controller, writes, diagnostics=diagnostics)
-        except HomeAssistantError:
-            raise
+        except HomeAssistantError as ex:
+            if (
+                config.addresses.mode_address is not None
+                and _is_illegal_address_error(ex)
+                and any(address == config.addresses.mode_address for address, _ in writes)
+            ):
+                reduced = _without_mode_register(writes, config.addresses.mode_address)
+                _LOGGER.warning(
+                    "Charge-period write including mode %s failed; retrying 48010–48012 only",
+                    config.addresses.mode_address,
+                )
+                await _write_contiguous_registers(controller, reduced, diagnostics=diagnostics)
+            else:
+                raise
         except ModbusIOException as ex:
             _LOGGER.warning(ex, exc_info=True)
             raise HomeAssistantError(str(ex) or "Modbus IO error writing charge period") from ex
