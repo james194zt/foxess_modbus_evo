@@ -15,6 +15,7 @@ from ..const import DOMAIN
 from ..entities.modbus_charge_period_sensors import is_time_value_valid
 from ..entities.modbus_charge_period_sensors import parse_time_value
 from ..entities.modbus_charge_period_sensors import serialize_time_to_value
+from ..client.modbus_client import ModbusClientFailedError
 from ..modbus_controller import ModbusController
 from ..vendor.pymodbus import ModbusIOException
 from .utils import get_controller_from_friendly_name_or_device_id
@@ -140,6 +141,41 @@ class ChargePeriod:
     end: time
 
 
+def _is_illegal_address_error(err: BaseException) -> bool:
+    return "IllegalAddress" in str(err)
+
+
+async def _write_charge_period_registers(
+    controller: ModbusController,
+    writes: list[tuple[int, int]],
+    *,
+    allow_single_register_fallback: bool,
+) -> None:
+    """Write one charge-period register block (batch, with optional per-register fallback)."""
+    write_start_address = min(w[0] for w in writes)
+    write_end_address = max(w[0] for w in writes)
+    write_values: list[int] = [None] * (write_end_address - write_start_address + 1)  # type: ignore
+
+    for address, value in writes:
+        i = address - write_start_address
+        write_values[i] = value
+
+    assert not any(x for x in write_values if x is None)
+
+    try:
+        await controller.write_registers(write_start_address, write_values)
+    except (ModbusIOException, ModbusClientFailedError) as ex:
+        if not allow_single_register_fallback or not _is_illegal_address_error(ex):
+            raise
+        _LOGGER.warning(
+            "Batch charge-period write at %s failed (%s); retrying register-by-register",
+            write_start_address,
+            ex,
+        )
+        for address, value in sorted(writes, key=lambda w: w[0]):
+            await controller.write_register(address, value)
+
+
 async def _update_all_charge_periods(
     controllers: list[ModbusController],
     service_data: ServiceCall,
@@ -255,18 +291,14 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
             )
             writes.append((config.addresses.mode_address, mode_value))
 
-        write_start_address = min(w[0] for w in writes)
-        write_end_address = max(w[0] for w in writes)
-        write_values: list[int] = [None] * (write_end_address - write_start_address + 1)  # type: ignore
-
-        for address, value in writes:
-            i = address - write_start_address
-            write_values[i] = value
-
-        assert not any(x for x in write_values if x is None)
-
         try:
-            await controller.write_registers(write_start_address, write_values)
+            await _write_charge_period_registers(
+                controller,
+                writes,
+                allow_single_register_fallback=config.addresses.mode_address is not None,
+            )
         except ModbusIOException as ex:
             _LOGGER.warning(ex, exc_info=True)
             raise HomeAssistantError() from ex
+        except ModbusClientFailedError as ex:
+            raise HomeAssistantError(str(ex)) from ex
