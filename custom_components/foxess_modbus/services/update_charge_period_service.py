@@ -145,30 +145,24 @@ def _is_illegal_address_error(err: BaseException) -> bool:
     return "IllegalAddress" in str(err)
 
 
-# Some EVO firmware exposes charge periods on 41xxx instead of 48xxx.
-_EVO_LEGACY_CHARGE_MAP: dict[int, int] = {
-    48010: 41001,
-    48011: 41002,
-    48012: 41003,
-    48020: 41004,
-    48021: 41005,
-    48022: 41006,
-}
 _EVO_MODE_REGISTERS = frozenset({48013, 48023})
 
 
-def _evo_legacy_writes(writes: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    legacy: list[tuple[int, int]] = []
-    for address, value in writes:
-        if address in _EVO_MODE_REGISTERS:
-            continue
-        mapped = _EVO_LEGACY_CHARGE_MAP.get(address)
-        if mapped is None:
-            raise HomeAssistantError(
-                f"No legacy charge-period register mapping for EVO address {address}."
-            )
-        legacy.append((mapped, value))
-    return legacy
+def _charge_period_diagnostics(
+    controller: ModbusController,
+    addresses: Any,
+) -> str:
+    """Summarise current Modbus reads for charge-period registers."""
+    parts: list[str] = []
+    for label, addr in (
+        ("grid", addresses.enable_charge_from_grid_address),
+        ("start", addresses.period_start_address),
+        ("end", addresses.period_end_address),
+        *([("mode", addresses.mode_address)] if addresses.mode_address is not None else []),
+    ):
+        value = controller.read(addr, signed=False)
+        parts.append(f"{label} @{addr}={value if value is not None else 'unreadable'}")
+    return ", ".join(parts)
 
 
 def _ordered_charge_period_writes(
@@ -193,18 +187,17 @@ def _ordered_charge_period_writes(
 async def _write_registers_one_by_one(
     controller: ModbusController,
     writes: list[tuple[int, int]],
+    *,
+    diagnostics: str = "",
 ) -> None:
-    last_err: BaseException | None = None
     for address, value in writes:
         try:
             await controller.write_register(address, value)
         except (ModbusIOException, ModbusClientFailedError) as ex:
-            last_err = ex
+            detail = f" Charge-period reads before write: {diagnostics}." if diagnostics else ""
             raise HomeAssistantError(
-                f"Charge-period write failed at register {address} (value {value}): {ex}"
+                f"Charge-period write failed at register {address} (value {value}): {ex}.{detail}"
             ) from ex
-    if last_err:
-        raise HomeAssistantError(str(last_err)) from last_err
 
 
 async def _write_charge_period_registers(
@@ -212,21 +205,15 @@ async def _write_charge_period_registers(
     writes: list[tuple[int, int]],
     *,
     evo_style: bool,
+    addresses: Any,
 ) -> None:
-    """Write one charge period. EVO uses single-register writes and may fall back to 41xxx."""
+    """Write one charge period. EVO always uses ordered single-register writes."""
+    diagnostics = _charge_period_diagnostics(controller, addresses)
     ordered = _ordered_charge_period_writes(writes, evo_style=evo_style)
 
     if evo_style:
-        try:
-            await _write_registers_one_by_one(controller, ordered)
-            return
-        except HomeAssistantError as ex:
-            if not _is_illegal_address_error(ex):
-                raise
-            _LOGGER.warning("EVO 48xxx charge-period write failed (%s); trying legacy 41xxx map", ex)
-            legacy = _evo_legacy_writes(writes)
-            await _write_registers_one_by_one(controller, sorted(legacy, key=lambda item: item[0]))
-            return
+        await _write_registers_one_by_one(controller, ordered, diagnostics=diagnostics)
+        return
 
     write_start_address = min(w[0] for w in writes)
     write_end_address = max(w[0] for w in writes)
@@ -248,7 +235,9 @@ async def _write_charge_period_registers(
             write_start_address,
             ex,
         )
-        await _write_registers_one_by_one(controller, sorted(writes, key=lambda item: item[0]))
+        await _write_registers_one_by_one(
+            controller, sorted(writes, key=lambda item: item[0]), diagnostics=diagnostics
+        )
 
 
 async def _update_all_charge_periods(
@@ -371,6 +360,7 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
                 controller,
                 writes,
                 evo_style=config.addresses.mode_address is not None,
+                addresses=config.addresses,
             )
         except ModbusIOException as ex:
             _LOGGER.warning(ex, exc_info=True)
