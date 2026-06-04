@@ -12,6 +12,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
 from ..const import DOMAIN
+from ..entities.modbus_charge_period_sensors import charge_period_start_register_value
 from ..entities.modbus_charge_period_sensors import is_time_value_valid
 from ..entities.modbus_charge_period_sensors import parse_time_value
 from ..entities.modbus_charge_period_sensors import serialize_time_to_value
@@ -336,7 +337,11 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
         writes: list[tuple[int, int]] = [
             (
                 config.addresses.period_start_address,
-                serialize_time_to_value(charge_period.start) if charge_period.enable_force_charge else 0,
+                charge_period_start_register_value(
+                    charge_period.start,
+                    charge_period.end,
+                    enabled=charge_period.enable_force_charge,
+                ),
             ),
             (
                 config.addresses.period_end_address,

@@ -51,6 +51,17 @@ def serialize_time_to_value(time_value: time) -> int:
     return (time_value.hour << 8) | time_value.minute
 
 
+def charge_period_start_register_value(start: time, end: time, *, enabled: bool) -> int:
+    """Register value for period start. EVO treats 0 as disabled even when end is set."""
+    if not enabled:
+        return 0
+    start_val = serialize_time_to_value(start)
+    end_val = serialize_time_to_value(end)
+    if start_val == 0 and end_val > 0:
+        return serialize_time_to_value(time(hour=0, minute=1))
+    return start_val
+
+
 def _is_force_charge_enabled(
     start_or_end_1: int,
     start_or_end_2: int,
