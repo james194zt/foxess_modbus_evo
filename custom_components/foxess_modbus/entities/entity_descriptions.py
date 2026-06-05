@@ -2907,6 +2907,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
             "Back-up": 2,
             "Peak Shaving": 4,
         },
+        include_remote_control_modes=False,
     )
 
     yield ModbusWorkModeSelectDescription(

@@ -188,16 +188,28 @@ async def _write_contiguous_registers(
     if any(x is None for x in write_values):
         raise ValueError(f"Incomplete charge-period write block: {writes}")
 
-    try:
-        await controller.write_registers(write_start_address, write_values)  # type: ignore[arg-type]
-    except (ModbusIOException, ModbusClientFailedError) as ex:
+    async def _fail(ex: BaseException) -> None:
         detail = f" Charge-period reads before write: {diagnostics}."
         raise HomeAssistantError(
             f"Charge-period write failed at {write_start_address} values {write_values}: {ex}.{detail} "
             "Charge-period entities are read-only in HA — use foxess_modbus.update_all_charge_periods. "
-            "If IllegalAddress persists, your firmware may not support writing charge periods via Modbus "
-            "(mode @48013 unreadable is common on EVO 10-H)."
+            "If IllegalAddress persists, this EVO firmware may not allow Modbus charge-period writes; "
+            "use the Remote Control → Force Charge select instead (requires foxess_modbus update with EVO remote control)."
         ) from ex
+
+    try:
+        await controller.write_registers(write_start_address, write_values)  # type: ignore[arg-type]
+        return
+    except (ModbusIOException, ModbusClientFailedError) as ex:
+        if not _is_illegal_address_error(ex):
+            await _fail(ex)
+        _LOGGER.warning("Batch charge-period write failed (%s); trying single-register writes", ex)
+
+    for address, value in sorted(writes, key=lambda item: item[0]):
+        try:
+            await controller.write_register(address, value)
+        except (ModbusIOException, ModbusClientFailedError) as ex:
+            await _fail(ex)
 
 
 async def _update_all_charge_periods(
