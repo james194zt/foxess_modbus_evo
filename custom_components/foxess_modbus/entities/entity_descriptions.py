@@ -2857,7 +2857,6 @@ def _bms_entities() -> Iterable[EntityFactory]:
         key="bms_ah_fcc",
         addresses=[ModbusAddressesSpec(holding=[37633], models=_BMS_PACK1_EXTENDED)],
         bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
-        entity_registry_enabled_default=False,
         name="BMS FCC Capacity",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Ah",
@@ -2869,12 +2868,12 @@ def _bms_entities() -> Iterable[EntityFactory]:
         key="bms_design_energy_wh",
         addresses=[ModbusAddressesSpec(holding=[37635], models=_BMS_PACK1_EXTENDED)],
         bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
-        entity_registry_enabled_default=False,
         name="BMS Design Energy",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Wh",
-        scale=0.1,
+        # EVO live read: raw 1024 → Fox Capacity 10240 Wh (×10, not PDF 0.1).
+        scale=10,
         signed=False,
         validate=[Min(0)],
     )
@@ -2892,7 +2891,6 @@ def _bms_entities() -> Iterable[EntityFactory]:
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Ah",
         icon="mdi:battery",
-        entity_registry_enabled_default=False,
     )
     yield from _inner(
         index=2,
