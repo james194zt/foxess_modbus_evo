@@ -2843,6 +2843,57 @@ def _bms_entities() -> Iterable[EntityFactory]:
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:counter",
     )
+
+    def _battery_ah_remaining_from_soc_fcc(values: list[float]) -> float | None:
+        if len(values) != 2:
+            return None
+        soc, fcc = values
+        if fcc <= 0:
+            return None
+        return round(soc / 100.0 * fcc, 1)
+
+    _BMS_PACK1_EXTENDED = Inv.H3_PRO_SET | Inv.H3_SMART | Inv.EVO
+    yield ModbusBatterySensorDescription(
+        key="bms_ah_fcc",
+        addresses=[ModbusAddressesSpec(holding=[37633], models=_BMS_PACK1_EXTENDED)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        entity_registry_enabled_default=False,
+        name="BMS FCC Capacity",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="Ah",
+        scale=0.1,
+        signed=False,
+        validate=[Min(0)],
+    )
+    yield ModbusBatterySensorDescription(
+        key="bms_design_energy_wh",
+        addresses=[ModbusAddressesSpec(holding=[37635], models=_BMS_PACK1_EXTENDED)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        entity_registry_enabled_default=False,
+        name="BMS Design Energy",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="Wh",
+        scale=0.1,
+        signed=False,
+        validate=[Min(0)],
+    )
+    yield ModbusLambdaSensorDescription(
+        key="battery_ah_remaining",
+        models=[
+            EntitySpec(
+                register_types=[RegisterType.HOLDING],
+                models=_BMS_PACK1_EXTENDED,
+            ),
+        ],
+        sources=["battery_soc_1", "bms_ah_fcc"],
+        method=_battery_ah_remaining_from_soc_fcc,
+        name="Battery Remaining Capacity",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="Ah",
+        icon="mdi:battery",
+        entity_registry_enabled_default=False,
+    )
     yield from _inner(
         index=2,
         bms_connect_state_address=[ModbusAddressSpec(holding=37700, models=Inv.H3_PRO_SET | Inv.H3_SMART)],
