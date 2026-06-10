@@ -121,7 +121,7 @@ Until Fox-exact registers are found, `foxess_modbus` exposes **estimated** healt
 
 | Entity key | Formula (summary) |
 |------------|-------------------|
-| `battery_ah_remaining` | SOC × **37616** nominal Ah / 100 (Fox parity) |
+| `battery_ah_remaining` | SOC × **37616** nominal Ah / 100 (direct Modbus read, Fox parity) |
 | `bms_remaining_power_capacity` | `max_discharge_current × batvolt_1 / 1000 × SOH/100` |
 | `bms_round_trip_efficiency_remaining` | `discharge_total / charge_total × 100`, capped by SOH |
 | `bms_ohmic_resistance` | Δcell mV / \|current\| under load; SOH baseline at rest |

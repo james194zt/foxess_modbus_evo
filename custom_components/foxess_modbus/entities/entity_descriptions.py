@@ -32,7 +32,7 @@ from .modbus_inverter_state_sensor import H1_INVERTER_STATES
 from .modbus_inverter_state_sensor import KH_INVERTER_STATES
 from .modbus_inverter_state_sensor import ModbusG2InverterStateSensorDescription
 from .modbus_inverter_state_sensor import ModbusInverterStateSensorDescription
-from .modbus_battery_health_sensors import battery_ah_remaining_from_soc_nominal
+from .modbus_battery_ah_remaining_sensor import ModbusBatteryAhRemainingSensorDescription
 from .modbus_battery_health_sensors import harmful_event_count_zero
 from .modbus_battery_health_sensors import ohmic_resistance_milliohm
 from .modbus_battery_health_sensors import remaining_power_capacity_kw
@@ -2894,11 +2894,18 @@ def _bms_entities() -> Iterable[EntityFactory]:
         signed=False,
         validate=[Min(0)],
     )
-    yield ModbusLambdaSensorDescription(
+    yield ModbusBatteryAhRemainingSensorDescription(
         key="battery_ah_remaining",
-        models=_BMS_HEALTH_MODELS,
-        sources=["battery_soc_1", "bms_ah_nominal"],
-        method=battery_ah_remaining_from_soc_nominal,
+        models=[
+            EntitySpec(
+                register_types=[RegisterType.HOLDING],
+                models=_BMS_PACK1_EXTENDED,
+            ),
+        ],
+        soc_address=[ModbusAddressSpec(holding=37612, models=_BMS_PACK1_EXTENDED)],
+        capacity_address=[ModbusAddressSpec(holding=37616, models=_BMS_PACK1_EXTENDED)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        capacity_scale=0.1,
         name="Battery Remaining Capacity",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Ah",
