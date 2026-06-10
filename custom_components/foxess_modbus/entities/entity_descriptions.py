@@ -32,6 +32,12 @@ from .modbus_inverter_state_sensor import H1_INVERTER_STATES
 from .modbus_inverter_state_sensor import KH_INVERTER_STATES
 from .modbus_inverter_state_sensor import ModbusG2InverterStateSensorDescription
 from .modbus_inverter_state_sensor import ModbusInverterStateSensorDescription
+from .modbus_battery_health_sensors import battery_ah_remaining_from_soc_nominal
+from .modbus_battery_health_sensors import harmful_event_count_zero
+from .modbus_battery_health_sensors import ohmic_resistance_milliohm
+from .modbus_battery_health_sensors import remaining_power_capacity_kw
+from .modbus_battery_health_sensors import round_trip_efficiency_remaining_percent
+from .modbus_battery_health_sensors import self_discharge_rate_percent_per_day
 from .modbus_lambda_sensor import ModbusLambdaSensorDescription
 from .modbus_number import ModbusNumberDescription
 from .modbus_sensor import ModbusSensorDescription
@@ -2844,15 +2850,14 @@ def _bms_entities() -> Iterable[EntityFactory]:
         icon="mdi:counter",
     )
 
-    def _battery_ah_remaining_from_soc_fcc(values: list[float]) -> float | None:
-        if len(values) != 2:
-            return None
-        soc, fcc = values
-        if fcc <= 0:
-            return None
-        return round(soc / 100.0 * fcc, 1)
-
     _BMS_PACK1_EXTENDED = Inv.H3_PRO_SET | Inv.H3_SMART | Inv.EVO
+    # Fox-style derived health metrics (EVO only — entity keys differ on multi-pack H3).
+    _BMS_HEALTH_MODELS = [
+        EntitySpec(
+            register_types=[RegisterType.HOLDING],
+            models=Inv.EVO,
+        ),
+    ]
     yield ModbusBatterySensorDescription(
         key="bms_ah_fcc",
         addresses=[ModbusAddressesSpec(holding=[37633], models=_BMS_PACK1_EXTENDED)],
@@ -2877,22 +2882,99 @@ def _bms_entities() -> Iterable[EntityFactory]:
         signed=False,
         validate=[Min(0)],
     )
+    # Fox app "Remaining Capacity" (Ah) tracks nominal bucket 37616, not live FCC 37633.
+    yield ModbusBatterySensorDescription(
+        key="bms_ah_nominal",
+        addresses=[ModbusAddressesSpec(holding=[37616], models=_BMS_PACK1_EXTENDED)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        name="BMS Nominal Capacity",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="Ah",
+        scale=0.1,
+        signed=False,
+        validate=[Min(0)],
+    )
     yield ModbusLambdaSensorDescription(
         key="battery_ah_remaining",
-        models=[
-            EntitySpec(
-                register_types=[RegisterType.HOLDING],
-                models=_BMS_PACK1_EXTENDED,
-            ),
-        ],
-        sources=["battery_soc_1", "bms_ah_fcc"],
-        method=_battery_ah_remaining_from_soc_fcc,
+        models=_BMS_HEALTH_MODELS,
+        sources=["battery_soc_1", "bms_ah_nominal"],
+        method=battery_ah_remaining_from_soc_nominal,
         name="Battery Remaining Capacity",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Ah",
         icon="mdi:battery",
     )
-    # EVO/H3: gap 37613–37614 (live-validated vs Fox Cloud Ah throughput).
+    yield ModbusLambdaSensorDescription(
+        key="bms_remaining_power_capacity",
+        models=_BMS_HEALTH_MODELS,
+        sources=["max_discharge_current", "batvolt_1", "battery_soh"],
+        method=remaining_power_capacity_kw,
+        name="BMS Remaining Power Capacity",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="kW",
+        icon="mdi:battery-arrow-down",
+    )
+    yield ModbusLambdaSensorDescription(
+        key="bms_round_trip_efficiency_remaining",
+        models=_BMS_HEALTH_MODELS,
+        sources=["battery_discharge_total", "battery_charge_total", "battery_soh"],
+        method=round_trip_efficiency_remaining_percent,
+        name="BMS Remaining Round Trip Efficiency",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="%",
+        icon="mdi:battery-sync",
+    )
+    yield ModbusLambdaSensorDescription(
+        key="bms_ohmic_resistance",
+        models=_BMS_HEALTH_MODELS,
+        sources=["bms_cell_mv_high_1", "bms_cell_mv_low_1", "bat_current_1", "battery_soh"],
+        method=ohmic_resistance_milliohm,
+        name="BMS Ohmic Resistance",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="mΩ",
+        icon="mdi:omega",
+    )
+    yield ModbusLambdaSensorDescription(
+        key="bms_self_discharge_rate",
+        models=_BMS_HEALTH_MODELS,
+        sources=["battery_soh", "battery_cycles"],
+        method=self_discharge_rate_percent_per_day,
+        name="BMS Self Discharge Rate",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="%/day",
+        icon="mdi:battery-alert",
+    )
+    yield ModbusLambdaSensorDescription(
+        key="bms_deep_discharge_event_count",
+        models=_BMS_HEALTH_MODELS,
+        sources=["battery_soh"],
+        method=harmful_event_count_zero,
+        name="BMS Deep Discharge Event Count",
+        state_class=SensorStateClass.TOTAL,
+        icon="mdi:battery-alert",
+    )
+    yield ModbusLambdaSensorDescription(
+        key="bms_extreme_temp_hours",
+        models=_BMS_HEALTH_MODELS,
+        sources=["battery_soh"],
+        method=harmful_event_count_zero,
+        name="BMS Extreme Temperature Hours",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement="h",
+        icon="mdi:thermometer-alert",
+    )
+    yield ModbusLambdaSensorDescription(
+        key="bms_extreme_temp_charge_hours",
+        models=_BMS_HEALTH_MODELS,
+        sources=["battery_soh"],
+        method=harmful_event_count_zero,
+        name="BMS Extreme Temperature Charge Hours",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement="h",
+        icon="mdi:battery-charging",
+    )
+    # EVO/H3: gap 37613–37614 — lifetime Ah throughput totals (drift vs Fox UI if read minutes apart).
     yield ModbusBatterySensorDescription(
         key="bms_discharge_capacity_throughput_ah",
         addresses=[ModbusAddressesSpec(holding=[37613], models=_BMS_PACK1_EXTENDED)],
@@ -2915,6 +2997,37 @@ def _bms_entities() -> Iterable[EntityFactory]:
         signed=False,
         validate=[Min(0)],
     )
+    # Undocumented gap between min cell mV (37620) and SOH (37624). Fox Cloud health / harmful-event
+    # counters are likely here or in fault bitfields 37626–37631 — enable for correlation probing.
+    for address, key_suffix in ((37621, "37621"), (37622, "37622"), (37623, "37623")):
+        yield ModbusBatterySensorDescription(
+            key=f"bms_gap_{key_suffix}",
+            addresses=[ModbusAddressesSpec(holding=[address], models=_BMS_PACK1_EXTENDED)],
+            bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+            name=f"BMS Gap Register {key_suffix}",
+            state_class=SensorStateClass.MEASUREMENT,
+            signed=False,
+            entity_registry_enabled_default=False,
+            icon="mdi:help-rhombus",
+        )
+    for address, fault_index in (
+        (37626, 1),
+        (37627, 2),
+        (37628, 3),
+        (37629, 4),
+        (37630, 5),
+        (37631, 6),
+    ):
+        yield ModbusBatterySensorDescription(
+            key=f"bms_fault_{fault_index}_raw",
+            addresses=[ModbusAddressesSpec(holding=[address], models=_BMS_PACK1_EXTENDED)],
+            bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+            name=f"BMS1 Fault{fault_index} Raw",
+            state_class=SensorStateClass.MEASUREMENT,
+            signed=False,
+            entity_registry_enabled_default=False,
+            icon="mdi:alert-decagram-outline",
+        )
     yield from _inner(
         index=2,
         bms_connect_state_address=[ModbusAddressSpec(holding=37700, models=Inv.H3_PRO_SET | Inv.H3_SMART)],

@@ -7,10 +7,10 @@ Fox Cloud Real-time shows several battery health fields that are not yet mapped 
 | Register | Fox signal | Unit | Scale | Entity key | Fox UI label |
 |----------|------------|------|-------|------------|--------------|
 | 37633 | BMS1 FCC Capacity | Ah | 0.1 | `bms_ah_fcc` | (used for Remaining Capacity calc) |
-| 37635 | BMS1 Design Energy | Wh | 0.1 | `bms_design_energy_wh` | **Capacity** (e.g. 10240 Wh) |
+| 37635 | BMS1 Design Energy | Wh | **10** (EVO: raw 1024 → 10240 Wh) | `bms_design_energy_wh` | **Capacity** (e.g. 10240 Wh) |
 | — | SoC × FCC / 100 | Ah | — | `battery_ah_remaining` | **Remaining Capacity** |
 
-New entities are **disabled by default** in the entity registry. Enable them under **Settings → Devices → FoxESS Modbus → Entities** after updating the integration.
+See **[PROBE_BMS_AH_REGISTERS.md](PROBE_BMS_AH_REGISTERS.md)** for the Ah throughput register hunt (gaps 37613–37616).
 
 ## Already mapped (reference)
 
@@ -39,20 +39,23 @@ Compare raw values with Fox Cloud Real-time (especially while values change):
 | Register | PDF name | Notes |
 |----------|----------|-------|
 | 37613–37616 | (gap) | Not in public PDF — candidate for Ah throughput counters |
-| 37621–37623 | (gap) | Not in public PDF |
-| 37626–37631 | BMS1 Fault1–6 | Bitfields |
+| 37621–37623 | (gap) | Not in public PDF — **probe sensors** `bms_gap_37621` etc. |
+| 37626–37631 | BMS1 Fault1–6 | Bitfields — **probe sensors** `bms_fault_1_raw` … `bms_fault_6_raw` |
 | 37634 | reserve | Unknown |
 
-### Fields likely cloud-only today
+See **[PROBE_BMS_HEALTH_REGISTERS.md](PROBE_BMS_HEALTH_REGISTERS.md)** for harmful-event and health correlation tests.
 
-These appear on Fox Cloud but have **no published Modbus address** in the H3 Smart register map:
+### Still unmapped (likely on Modbus, address TBD)
+
+These appear on Fox Cloud; the public PDF does not name them, but **37613/37614** showed they can still be on the wire:
 
 - Evolution of self-discharging rates
 - Remaining Power Capacity
 - Remaining Round trip efficiency
 - Ohmic resistance
-- Charge / Discharge **Capacity** throughput (Ah) — energy totals (kWh) **are** on Modbus
-- Deep discharge event count
-- Time spent in extreme temp / charging in extreme temp
+- Deep discharge event count — **37622** is a lead (raw 15 vs Fox cycles ≈13)
+- Time spent in extreme temp / charging in extreme temp — try **37621–37623** as U16/U32 minutes
 
-If probing finds stable matches, add entities in `entity_descriptions.py` and wire them in `foxess_plant` `PANEL_ENTITY_SUFFIXES`.
+**Mapped:** Charge / Discharge **Capacity** throughput (Ah) — **37614 / 37613**.
+
+When probing finds stable matches, add entities in `entity_descriptions.py` and wire them in `foxess_plant` `PANEL_ENTITY_SUFFIXES`.

@@ -16,6 +16,10 @@ Validation:
 
 Modbus entities: `bms_charge_capacity_throughput_ah`, `bms_discharge_capacity_throughput_ah`.
 
+Both are **lifetime running totals** on the BMS (same class of metric as Fox “Capacity throughput”). They keep counting while the pack is active, so a Modbus read and a Fox Cloud screenshot taken a few minutes apart can differ slightly — that is normal, not a scale error.
+
+**Fox Cloud lag:** the app is often **~1+ minutes behind** Modbus on live PV/power; cumulative rows can also tick between snapshot and `read_registers`. Prefer stable totals for validation; treat Modbus as authoritative for real-time UI.
+
 ## Other gap registers (same dump, not Ah throughput)
 
 | Register | Raw | Notes |
