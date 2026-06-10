@@ -2892,6 +2892,29 @@ def _bms_entities() -> Iterable[EntityFactory]:
         native_unit_of_measurement="Ah",
         icon="mdi:battery",
     )
+    # EVO/H3: gap 37613–37614 (live-validated vs Fox Cloud Ah throughput).
+    yield ModbusBatterySensorDescription(
+        key="bms_discharge_capacity_throughput_ah",
+        addresses=[ModbusAddressesSpec(holding=[37613], models=_BMS_PACK1_EXTENDED)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        name="BMS Discharge Capacity Throughput",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement="Ah",
+        scale=4 / 15,
+        signed=False,
+        validate=[Min(0)],
+    )
+    yield ModbusBatterySensorDescription(
+        key="bms_charge_capacity_throughput_ah",
+        addresses=[ModbusAddressesSpec(holding=[37614], models=_BMS_PACK1_EXTENDED)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        name="BMS Charge Capacity Throughput",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement="Ah",
+        scale=3 / 8,
+        signed=False,
+        validate=[Min(0)],
+    )
     yield from _inner(
         index=2,
         bms_connect_state_address=[ModbusAddressSpec(holding=37700, models=Inv.H3_PRO_SET | Inv.H3_SMART)],
