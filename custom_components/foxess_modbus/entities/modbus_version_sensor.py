@@ -23,6 +23,7 @@ class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  #
 
     address: list[ModbusAddressSpec]
     is_hex: bool
+    pack_token: bool = False
 
     @property
     def entity_type(self) -> type[Entity]:
@@ -48,6 +49,7 @@ class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  #
             "name": self.name,
             "addresses": addresses,
             "is_hex": self.is_hex,
+            "pack_token": self.pack_token,
         }
 
 
@@ -72,7 +74,12 @@ class ModbusVersionSensor(ModbusEntityMixin, SensorEntity):
         if value is None:
             return None
 
-        # These have the format x.yy
+        # These have the format x.yy (decimal), x.YY (hex PCS), or X.XXX (EVO BMS pack token).
+
+        if entity_description.pack_token:
+            major = (value >> 12) & 0xF
+            minor = value & 0xFFF
+            return f"{major}.{minor:03d}"
 
         if entity_description.is_hex:
             major = value >> 8

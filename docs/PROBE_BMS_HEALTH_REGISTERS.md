@@ -106,7 +106,7 @@ Compare **37037–37096** against Fox health rows.
 | **37005–37012** | Master SN ASCII — mirrors pack 1 serial start |
 | **37013–37031** | All `0` (padding) |
 | **37032** | `4` = four slave packs |
-| **37033–37036** | `0x1000` … `0x4000` = slave 1–4 version tokens |
+| **37033–37036** | `0x1000` … `0x4000` = slave 1–4 version tokens — decode as `{(v>>12)}.{(v&0xFFF):03d}` (e.g. `0x1001` → **1.001**, Fox **Version_BCU**) |
 | **37037–37064** | All `0` — **no health counters here** |
 | **37065–37068** | All `255` — likely **per-pack manufacture date** sentinels (Fox shows `--`) |
 | **37069–37096** | All `0` |

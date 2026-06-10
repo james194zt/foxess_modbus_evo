@@ -1,6 +1,15 @@
 [
   {
     "addresses": [
+      36004
+    ],
+    "is_hex": false,
+    "key": "afci_version",
+    "name": "Version: AFCI",
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       37618
     ],
     "key": "ambtemp",
@@ -245,37 +254,41 @@
     "addresses": [
       37033
     ],
-    "is_hex": true,
+    "is_hex": false,
     "key": "bms_pack_1_version",
     "name": "BMS Pack 1 Version",
-    "type": "sensor"
+    "type": "sensor",
+    "pack_token": true
   },
   {
     "addresses": [
       37034
     ],
-    "is_hex": true,
+    "is_hex": false,
     "key": "bms_pack_2_version",
     "name": "BMS Pack 2 Version",
-    "type": "sensor"
+    "type": "sensor",
+    "pack_token": true
   },
   {
     "addresses": [
       37035
     ],
-    "is_hex": true,
+    "is_hex": false,
     "key": "bms_pack_3_version",
     "name": "BMS Pack 3 Version",
-    "type": "sensor"
+    "type": "sensor",
+    "pack_token": true
   },
   {
     "addresses": [
       37036
     ],
-    "is_hex": true,
+    "is_hex": false,
     "key": "bms_pack_4_version",
     "name": "BMS Pack 4 Version",
-    "type": "sensor"
+    "type": "sensor",
+    "pack_token": true
   },
   {
     "addresses": [
@@ -643,6 +656,101 @@
   },
   {
     "addresses": [
+      46607
+    ],
+    "key": "max_charge_current",
+    "name": "Max Charge Current",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46607
+    ],
+    "key": "max_charge_current",
+    "name": "Max Charge Current",
+    "scale": 0.1,
+    "type": "number"
+  },
+  {
+    "addresses": [
+      46608
+    ],
+    "key": "max_discharge_current",
+    "name": "Max Discharge Current",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46608
+    ],
+    "key": "max_discharge_current",
+    "name": "Max Discharge Current",
+    "scale": 0.1,
+    "type": "number"
+  },
+  {
+    "addresses": [
+      46610
+    ],
+    "key": "max_soc",
+    "name": "Max SoC",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46610
+    ],
+    "key": "max_soc",
+    "name": "Max SoC",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
+      46609
+    ],
+    "key": "min_soc",
+    "name": "Min SoC",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46609
+    ],
+    "key": "min_soc",
+    "name": "Min SoC",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
+      46611
+    ],
+    "key": "min_soc_on_grid",
+    "name": "Min SoC (On Grid)",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46611
+    ],
+    "key": "min_soc_on_grid",
+    "name": "Min SoC (On Grid)",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
       39000,
       39001
     ],
@@ -697,101 +805,6 @@
     "name": "PCS Serial Number",
     "register_count": 16,
     "type": "string_sensor"
-  },
-  {
-    "addresses": [
-      46607
-    ],
-    "key": "max_charge_current",
-    "name": "Max Charge Current",
-    "scale": 0.1,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      46607
-    ],
-    "key": "max_charge_current",
-    "name": "Max Charge Current",
-    "scale": 0.1,
-    "type": "number"
-  },
-  {
-    "addresses": [
-      46608
-    ],
-    "key": "max_discharge_current",
-    "name": "Max Discharge Current",
-    "scale": 0.1,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      46608
-    ],
-    "key": "max_discharge_current",
-    "name": "Max Discharge Current",
-    "scale": 0.1,
-    "type": "number"
-  },
-  {
-    "addresses": [
-      46610
-    ],
-    "key": "max_soc",
-    "name": "Max SoC",
-    "scale": null,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      46610
-    ],
-    "key": "max_soc",
-    "name": "Max SoC",
-    "scale": null,
-    "type": "number"
-  },
-  {
-    "addresses": [
-      46609
-    ],
-    "key": "min_soc",
-    "name": "Min SoC",
-    "scale": null,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      46609
-    ],
-    "key": "min_soc",
-    "name": "Min SoC",
-    "scale": null,
-    "type": "number"
-  },
-  {
-    "addresses": [
-      46611
-    ],
-    "key": "min_soc_on_grid",
-    "name": "Min SoC (On Grid)",
-    "scale": null,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      46611
-    ],
-    "key": "min_soc_on_grid",
-    "name": "Min SoC (On Grid)",
-    "scale": null,
-    "type": "number"
   },
   {
     "addresses": [

@@ -145,6 +145,14 @@ def _version_entities() -> Iterable[EntityFactory]:
         is_hex=True,
     )
 
+    yield ModbusVersionSensorDescription(
+        key="afci_version",
+        address=[ModbusAddressSpec(holding=36004, models=Inv.EVO)],
+        name="Version: AFCI",
+        is_hex=False,
+        icon="mdi:flash-alert",
+    )
+
 
 def _identity_entities() -> Iterable[EntityFactory]:
     """PCS / BMS identity from EVO holding registers (Fox app parity where confirmed)."""
@@ -193,7 +201,8 @@ def _identity_entities() -> Iterable[EntityFactory]:
             key=f"bms_pack_{pack_index}_version",
             address=[ModbusAddressSpec(holding=holding, models=Inv.EVO)],
             name=f"BMS Pack {pack_index} Version",
-            is_hex=True,
+            is_hex=False,
+            pack_token=True,
             icon="mdi:battery-sync",
         )
 
