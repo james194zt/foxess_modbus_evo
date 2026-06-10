@@ -57,6 +57,21 @@ class ModbusBatteryAhRemainingSensorDescription(SensorEntityDescription, EntityF
             capacity_scale=self.capacity_scale,
         )
 
+    def serialize(self, inverter_model: Inv, register_type: RegisterType) -> dict[str, Any] | None:
+        soc_address = self._address_for_inverter_model(self.soc_address, inverter_model, register_type)
+        capacity_address = self._address_for_inverter_model(self.capacity_address, inverter_model, register_type)
+        if soc_address is None or capacity_address is None:
+            return None
+
+        return {
+            "type": "sensor",
+            "key": self.key,
+            "name": self.name,
+            "addresses": [soc_address, capacity_address],
+            "scale": self.capacity_scale,
+            "signed": False,
+        }
+
 
 class ModbusBatteryAhRemainingSensor(ModbusEntityMixin, SensorEntity):
     """Remaining battery capacity (Ah) from SoC and nominal Ah register."""
