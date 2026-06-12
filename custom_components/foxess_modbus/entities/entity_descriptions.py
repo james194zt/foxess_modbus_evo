@@ -44,6 +44,7 @@ from .modbus_sensor import ModbusSensorDescription
 from .modbus_binary_sensor import ModbusBinarySensorDescription
 from .modbus_string_sensor import ModbusProtocolVersionSensorDescription
 from .modbus_string_sensor import ModbusStringSensorDescription
+from .modbus_afci_version_sensor import ModbusAfciVersionSensorDescription
 from .modbus_version_sensor import ModbusVersionSensorDescription
 from .modbus_work_mode_select import ModbusWorkModeSelectDescription
 from .remote_control_description import REMOTE_CONTROL_DESCRIPTION
@@ -145,11 +146,10 @@ def _version_entities() -> Iterable[EntityFactory]:
         is_hex=True,
     )
 
-    yield ModbusVersionSensorDescription(
+    yield ModbusAfciVersionSensorDescription(
         key="afci_version",
-        address=[ModbusAddressSpec(holding=36004, models=Inv.EVO)],
+        models=Inv.EVO,
         name="Version: AFCI",
-        is_hex=False,
         icon="mdi:flash-alert",
     )
 

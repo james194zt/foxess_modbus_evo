@@ -1,12 +1,33 @@
 [
   {
-    "addresses": [
-      36004
+    "holding_candidates": [
+      36004,
+      36005,
+      36006,
+      36007,
+      36008,
+      36009,
+      36010,
+      36011,
+      36012,
+      39004,
+      39005,
+      39006,
+      39007,
+      39008,
+      39019,
+      39020
     ],
-    "is_hex": false,
+    "input_candidates": [
+      10019,
+      10020,
+      10021,
+      10022,
+      10023
+    ],
     "key": "afci_version",
     "name": "Version: AFCI",
-    "type": "sensor"
+    "type": "afci_version_sensor"
   },
   {
     "addresses": [
