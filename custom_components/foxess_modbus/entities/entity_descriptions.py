@@ -44,7 +44,6 @@ from .modbus_sensor import ModbusSensorDescription
 from .modbus_binary_sensor import ModbusBinarySensorDescription
 from .modbus_string_sensor import ModbusProtocolVersionSensorDescription
 from .modbus_string_sensor import ModbusStringSensorDescription
-from .modbus_afci_version_sensor import ModbusAfciVersionSensorDescription
 from .modbus_version_sensor import ModbusVersionSensorDescription
 from .modbus_work_mode_select import ModbusWorkModeSelectDescription
 from .remote_control_description import REMOTE_CONTROL_DESCRIPTION
@@ -146,13 +145,6 @@ def _version_entities() -> Iterable[EntityFactory]:
         is_hex=True,
     )
 
-    yield ModbusAfciVersionSensorDescription(
-        key="afci_version",
-        models=Inv.EVO,
-        name="Version: AFCI",
-        icon="mdi:flash-alert",
-    )
-
 
 def _identity_entities() -> Iterable[EntityFactory]:
     """PCS / BMS identity from EVO holding registers (Fox app parity where confirmed)."""
@@ -201,9 +193,7 @@ def _identity_entities() -> Iterable[EntityFactory]:
             key=f"bms_pack_{pack_index}_version",
             address=[ModbusAddressSpec(holding=holding, models=Inv.EVO)],
             name=f"BMS Pack {pack_index} Version",
-            is_hex=False,
-            pack_token=True,
-            pack_token_sub_register=pack_index == 1,
+            is_hex=True,
             icon="mdi:battery-sync",
         )
 

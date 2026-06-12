@@ -1,0 +1,3 @@
+Fix EVO BMS design energy scale (37635 raw ×10 → Wh) and enable FCC sensors by default.
+
+Live probe: 37635=1024 matches Fox Capacity 10240 Wh; 37633=488 ×0.1 ≈ 50 Ah FCC.

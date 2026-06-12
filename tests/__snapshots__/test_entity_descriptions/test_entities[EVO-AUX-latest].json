@@ -1,35 +1,5 @@
 [
   {
-    "holding_candidates": [
-      36004,
-      36005,
-      36006,
-      36007,
-      36008,
-      36009,
-      36010,
-      36011,
-      36012,
-      39004,
-      39005,
-      39006,
-      39007,
-      39008,
-      39019,
-      39020
-    ],
-    "input_candidates": [
-      10019,
-      10020,
-      10021,
-      10022,
-      10023
-    ],
-    "key": "afci_version",
-    "name": "Version: AFCI",
-    "type": "afci_version_sensor"
-  },
-  {
     "addresses": [
       37618
     ],
@@ -275,42 +245,37 @@
     "addresses": [
       37033
     ],
-    "is_hex": false,
+    "is_hex": true,
     "key": "bms_pack_1_version",
     "name": "BMS Pack 1 Version",
-    "type": "sensor",
-    "pack_token": true,
-    "pack_token_sub_register": true
+    "type": "sensor"
   },
   {
     "addresses": [
       37034
     ],
-    "is_hex": false,
+    "is_hex": true,
     "key": "bms_pack_2_version",
     "name": "BMS Pack 2 Version",
-    "type": "sensor",
-    "pack_token": true
+    "type": "sensor"
   },
   {
     "addresses": [
       37035
     ],
-    "is_hex": false,
+    "is_hex": true,
     "key": "bms_pack_3_version",
     "name": "BMS Pack 3 Version",
-    "type": "sensor",
-    "pack_token": true
+    "type": "sensor"
   },
   {
     "addresses": [
       37036
     ],
-    "is_hex": false,
+    "is_hex": true,
     "key": "bms_pack_4_version",
     "name": "BMS Pack 4 Version",
-    "type": "sensor",
-    "pack_token": true
+    "type": "sensor"
   },
   {
     "addresses": [

@@ -1,0 +1,3 @@
+Add derived BMS health sensors and probe docs for EVO.
+
+Compute Fox-style health rows from Modbus inputs (remaining power, round-trip efficiency, ohmic estimate, self-discharge rate), use 37616 for remaining Ah, and expose gap/fault probe registers.

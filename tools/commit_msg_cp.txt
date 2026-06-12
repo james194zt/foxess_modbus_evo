@@ -1,0 +1,3 @@
+EVO charge periods: FC16 batch write at 48010, skip unreadable mode.
+
+Restore markybry-style block write. EVO rejects FC06 single writes to 48011. Omit 48013/48023 when unreadable.

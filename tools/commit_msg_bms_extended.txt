@@ -1,0 +1,4 @@
+Add BMS extended pack registers for Fox Real-time battery health fields.
+
+Expose FCC capacity (37633), design energy (37635), and computed remaining Ah
+for H3 PRO/SMART and EVO. Document probe steps for unmapped Fox Cloud fields.

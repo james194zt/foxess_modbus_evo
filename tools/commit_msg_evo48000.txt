@@ -1,0 +1,4 @@
+EVO charge periods: enable time group at 48000 before 48010 block.
+
+H3-Smart/EVO mode planner requires register 48000=1 before period writes.
+Include extended time-group registers 48014-48016 and 48019 per evcc-io/evcc#25140.
