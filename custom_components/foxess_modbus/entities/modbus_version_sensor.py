@@ -17,6 +17,20 @@ from .inverter_model_spec import ModbusAddressSpec
 from .modbus_entity_mixin import ModbusEntityMixin
 
 
+def format_pack_token(value: int, *, sub_register: int | None = None) -> str:
+    """Decode EVO BMS pack version token (37033–37036).
+
+    When the low 12 bits are zero, some firmware stores the minor revision in the
+    next holding register (37033=0x1000, 37034=4 → Fox Version_BCU 1.004).
+    """
+    minor = value & 0xFFF
+    if minor == 0 and sub_register is not None and 0 < sub_register < 0x1000:
+        value = value | (sub_register & 0xFFF)
+    major = (value >> 12) & 0xF
+    minor = value & 0xFFF
+    return f"{major}.{minor:03d}"
+
+
 @dataclass(kw_only=True, **ENTITY_DESCRIPTION_KWARGS)
 class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  # type: ignore[misc]
     """Description for ModbusVersionSensor"""
@@ -24,6 +38,7 @@ class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  #
     address: list[ModbusAddressSpec]
     is_hex: bool
     pack_token: bool = False
+    pack_token_sub_register: bool = False
 
     @property
     def entity_type(self) -> type[Entity]:
@@ -50,6 +65,7 @@ class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  #
             "addresses": addresses,
             "is_hex": self.is_hex,
             "pack_token": self.pack_token,
+            "pack_token_sub_register": self.pack_token_sub_register,
         }
 
 
@@ -77,9 +93,10 @@ class ModbusVersionSensor(ModbusEntityMixin, SensorEntity):
         # These have the format x.yy (decimal), x.YY (hex PCS), or X.XXX (EVO BMS pack token).
 
         if entity_description.pack_token:
-            major = (value >> 12) & 0xF
-            minor = value & 0xFFF
-            return f"{major}.{minor:03d}"
+            sub_register: int | None = None
+            if entity_description.pack_token_sub_register and (value & 0xFFF) == 0:
+                sub_register = self._controller.read(self._address + 1, signed=False)
+            return format_pack_token(value, sub_register=sub_register)
 
         if entity_description.is_hex:
             major = value >> 8
@@ -92,6 +109,9 @@ class ModbusVersionSensor(ModbusEntityMixin, SensorEntity):
 
     @property
     def addresses(self) -> list[int]:
+        entity_description = cast(ModbusVersionSensorDescription, self.entity_description)
+        if entity_description.pack_token_sub_register:
+            return [self._address, self._address + 1]
         return [self._address]
 
     @property

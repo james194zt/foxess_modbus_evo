@@ -1,6 +1,7 @@
 """AFCI version decode helpers."""
 
 from custom_components.foxess_modbus.entities.modbus_afci_version_sensor import format_afci_version
+from custom_components.foxess_modbus.entities.modbus_afci_version_sensor import is_plausible_afci_raw
 from custom_components.foxess_modbus.entities.modbus_afci_version_sensor import pick_afci_decode
 
 
@@ -13,3 +14,9 @@ def test_afci_pcs_hex_decode_matches_fox() -> None:
 def test_afci_decimal_decode() -> None:
     assert format_afci_version(37, hex_style=False) == "0.37"
     assert pick_afci_decode(37) in ("0.37", "0.25")
+
+
+def test_afci_rejects_unrelated_register_values() -> None:
+    assert not is_plausible_afci_raw(0x3130)
+    assert pick_afci_decode(0x3130) is None
+    assert is_plausible_afci_raw(0x0037)

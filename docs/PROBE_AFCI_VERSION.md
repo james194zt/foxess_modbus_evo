@@ -17,7 +17,7 @@ Prefer PCS hex (matches manager at 36003).
 
 ## Automated probe (foxess_modbus_EVO)
 
-`Version: AFCI` (`afci_version`) now **probes** holding `36004–36012` and `39004–39008` on connect and only registers the address that responds. Check logs for:
+`Version: AFCI` (`afci_version`) now **probes** holding `36004–36012` and `39004–39008` on connect and only registers the address that responds. Values must look like PCS firmware (major byte ≤ 9, e.g. `0x0037` → `0.37`); unrelated registers such as `0x3130` → `31.30` are skipped. Check logs for:
 
 `AFCI version probe found register HOLDING <addr> raw=<n> -> 0.37`
 

@@ -47,6 +47,14 @@ def format_afci_version(value: int, *, hex_style: bool) -> str:
     return f"{major}.{minor:02d}"
 
 
+def is_plausible_afci_raw(value: int) -> bool:
+    """Reject unrelated registers that decode like versions (e.g. 0x3130 → 31.30)."""
+    if value <= 0 or value > 0xFFFF:
+        return False
+    # PCS-style AFCI versions match manager at 36003 (0x0030 → 0.30): major byte is small.
+    return (value >> 8) <= 9
+
+
 def decode_afci_version_guesses(value: int) -> list[tuple[str, bool]]:
     """Return (formatted, hex_style) pairs that could match Fox Version_AFCI (e.g. 0.37)."""
     if value < 0 or value > 0xFFFF:
@@ -68,6 +76,8 @@ def decode_afci_version_guesses(value: int) -> list[tuple[str, bool]]:
 
 def pick_afci_decode(value: int) -> str | None:
     """Prefer PCS-style hex (matches EVO manager 0.30 at 36003)."""
+    if not is_plausible_afci_raw(value):
+        return None
     guesses = decode_afci_version_guesses(value)
     if not guesses:
         return None
@@ -173,6 +183,14 @@ class ModbusAfciVersionSensor(ModbusEntityMixin, SensorEntity):
                 if not values:
                     continue
                 value = int(values[0])
+                if not is_plausible_afci_raw(value):
+                    _LOGGER.debug(
+                        "AFCI probe skipping %s %s raw=%s (implausible firmware version)",
+                        register_type.name,
+                        address,
+                        value,
+                    )
+                    continue
                 formatted = pick_afci_decode(value)
                 if formatted is None:
                     continue

@@ -203,6 +203,7 @@ def _identity_entities() -> Iterable[EntityFactory]:
             name=f"BMS Pack {pack_index} Version",
             is_hex=False,
             pack_token=True,
+            pack_token_sub_register=pack_index == 1,
             icon="mdi:battery-sync",
         )
 

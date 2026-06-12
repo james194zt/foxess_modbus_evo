@@ -279,7 +279,8 @@
     "key": "bms_pack_1_version",
     "name": "BMS Pack 1 Version",
     "type": "sensor",
-    "pack_token": true
+    "pack_token": true,
+    "pack_token_sub_register": true
   },
   {
     "addresses": [
