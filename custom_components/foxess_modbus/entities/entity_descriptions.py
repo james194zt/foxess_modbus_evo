@@ -22,6 +22,9 @@ from .modbus_battery_cycles_sensor import ModbusBatteryCyclesSensorDescription
 from .modbus_battery_kwh_remaining_sensor import ModbusBatteryKwhRemainingSensorDescription
 from .modbus_battery_status_sensor import ModbusBatteryStatusSensorDescription
 from .modbus_battery_sensor import ModbusBatterySensorDescription
+from .modbus_alarm_sensor import FOXESS_INVERTER_ALARMS
+from .modbus_alarm_sensor import AlarmSensorMode
+from .modbus_alarm_sensor import ModbusAlarmSensorDescription
 from .modbus_fault_sensor import H3_PRO_KH_133_FAULTS
 from .modbus_fault_sensor import STANDARD_FAULTS
 from .modbus_fault_sensor import FaultSet
@@ -1907,6 +1910,21 @@ def _inverter_entities() -> Iterable[EntityFactory]:
         fault_set=H3_PRO_KH_133_FAULTS,
     )
 
+    def _inverter_alarms(mode: AlarmSensorMode) -> EntityFactory:
+        return ModbusAlarmSensorDescription(
+            key="inverter_alarms" if mode == AlarmSensorMode.ACTIVE else "inverter_alarm_last",
+            addresses=[
+                ModbusAddressesSpec(holding=[39067, 39068, 39069], models=Inv.H3_PRO_SET | Inv.H3_SMART | Inv.H1_G2_144 | Inv.KH_133 | Inv.EVO),
+            ],
+            alarm_set=FOXESS_INVERTER_ALARMS,
+            mode=mode,
+            name="Inverter Alarms" if mode == AlarmSensorMode.ACTIVE else "Inverter Alarm Last Event",
+            icon="mdi:bell-alert-outline" if mode == AlarmSensorMode.ACTIVE else "mdi:bell-ring-outline",
+        )
+
+    yield _inverter_alarms(AlarmSensorMode.ACTIVE)
+    yield _inverter_alarms(AlarmSensorMode.LAST_EVENT)
+
     yield ModbusInverterStateSensorDescription(
         key="inverter_state",
         address=[
@@ -3032,7 +3050,6 @@ def _bms_entities() -> Iterable[EntityFactory]:
             name=f"BMS1 Fault{fault_index} Raw",
             state_class=SensorStateClass.MEASUREMENT,
             signed=False,
-            entity_registry_enabled_default=False,
             icon="mdi:alert-decagram-outline",
         )
     yield from _inner(

@@ -21,6 +21,17 @@
   },
   {
     "addresses": [
+      37612,
+      37616
+    ],
+    "key": "battery_ah_remaining",
+    "name": "Battery Remaining Capacity",
+    "scale": 0.1,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39238,
       39237
     ],
@@ -185,6 +196,26 @@
   },
   {
     "addresses": [
+      37633
+    ],
+    "key": "bms_ah_fcc",
+    "name": "BMS FCC Capacity",
+    "scale": 0.1,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37616
+    ],
+    "key": "bms_ah_nominal",
+    "name": "BMS Nominal Capacity",
+    "scale": 0.1,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       37619
     ],
     "key": "bms_cell_mv_high_1",
@@ -225,6 +256,150 @@
   },
   {
     "addresses": [
+      37614
+    ],
+    "key": "bms_charge_capacity_throughput_ah",
+    "name": "BMS Charge Capacity Throughput",
+    "scale": 0.375,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "key": "bms_deep_discharge_event_count",
+    "name": "BMS Deep Discharge Event Count",
+    "sources": [
+      "battery_soh"
+    ],
+    "type": "lambda"
+  },
+  {
+    "addresses": [
+      37635
+    ],
+    "key": "bms_design_energy_wh",
+    "name": "BMS Design Energy",
+    "scale": 10,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37613
+    ],
+    "key": "bms_discharge_capacity_throughput_ah",
+    "name": "BMS Discharge Capacity Throughput",
+    "scale": 0.26666666666666666,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "key": "bms_extreme_temp_charge_hours",
+    "name": "BMS Extreme Temperature Charge Hours",
+    "sources": [
+      "battery_soh"
+    ],
+    "type": "lambda"
+  },
+  {
+    "key": "bms_extreme_temp_hours",
+    "name": "BMS Extreme Temperature Hours",
+    "sources": [
+      "battery_soh"
+    ],
+    "type": "lambda"
+  },
+  {
+    "addresses": [
+      37626
+    ],
+    "key": "bms_fault_1_raw",
+    "name": "BMS1 Fault1 Raw",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37627
+    ],
+    "key": "bms_fault_2_raw",
+    "name": "BMS1 Fault2 Raw",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37628
+    ],
+    "key": "bms_fault_3_raw",
+    "name": "BMS1 Fault3 Raw",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37629
+    ],
+    "key": "bms_fault_4_raw",
+    "name": "BMS1 Fault4 Raw",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37630
+    ],
+    "key": "bms_fault_5_raw",
+    "name": "BMS1 Fault5 Raw",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37631
+    ],
+    "key": "bms_fault_6_raw",
+    "name": "BMS1 Fault6 Raw",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37621
+    ],
+    "key": "bms_gap_37621",
+    "name": "BMS Gap Register 37621",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37622
+    ],
+    "key": "bms_gap_37622",
+    "name": "BMS Gap Register 37622",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37623
+    ],
+    "key": "bms_gap_37623",
+    "name": "BMS Gap Register 37623",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       37632
     ],
     "key": "bms_kwh_remaining_1",
@@ -232,6 +407,17 @@
     "scale": 0.01,
     "signed": false,
     "type": "sensor"
+  },
+  {
+    "key": "bms_ohmic_resistance",
+    "name": "BMS Ohmic Resistance",
+    "sources": [
+      "bms_cell_mv_high_1",
+      "bms_cell_mv_low_1",
+      "bat_current_1",
+      "battery_soh"
+    ],
+    "type": "lambda"
   },
   {
     "addresses": [
@@ -310,6 +496,35 @@
     "name": "BMS Pack Serial (Modbus)",
     "register_count": 16,
     "type": "string_sensor"
+  },
+  {
+    "key": "bms_remaining_power_capacity",
+    "name": "BMS Remaining Power Capacity",
+    "sources": [
+      "max_discharge_current",
+      "batvolt_1",
+      "battery_soh"
+    ],
+    "type": "lambda"
+  },
+  {
+    "key": "bms_round_trip_efficiency_remaining",
+    "name": "BMS Remaining Round Trip Efficiency",
+    "sources": [
+      "battery_discharge_total",
+      "battery_charge_total",
+      "battery_soh"
+    ],
+    "type": "lambda"
+  },
+  {
+    "key": "bms_self_discharge_rate",
+    "name": "BMS Self Discharge Rate",
+    "sources": [
+      "battery_soh",
+      "battery_cycles"
+    ],
+    "type": "lambda"
   },
   {
     "addresses": [
@@ -537,6 +752,140 @@
     "scale": 0.1,
     "signed": true,
     "type": "sensor"
+  },
+  {
+    "addresses": [
+      39067,
+      39068,
+      39069
+    ],
+    "alarms": [
+      [
+        "PV Over-voltage",
+        "DC arc fault",
+        "String reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Grid power outage",
+        "Abnormal grid voltage",
+        null,
+        null,
+        "Abnormal grid frequency",
+        null,
+        null,
+        "Output overcurrent",
+        "Output DC component too large"
+      ],
+      [
+        "Residual current",
+        "Grounding fault",
+        "Low insulation resistance",
+        "Inverter overtemperature",
+        null,
+        null,
+        null,
+        null,
+        null,
+        "Energy storage equipment abnormal",
+        "Islanding",
+        null,
+        null,
+        null,
+        "Off-grid output overload",
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        "External fan fault",
+        "Energy storage reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Meter lost",
+        "BMS lost",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "key": "inverter_alarm_last",
+    "mode": "last_event",
+    "name": "Inverter Alarm Last Event",
+    "type": "alarm-sensor"
+  },
+  {
+    "addresses": [
+      39067,
+      39068,
+      39069
+    ],
+    "alarms": [
+      [
+        "PV Over-voltage",
+        "DC arc fault",
+        "String reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Grid power outage",
+        "Abnormal grid voltage",
+        null,
+        null,
+        "Abnormal grid frequency",
+        null,
+        null,
+        "Output overcurrent",
+        "Output DC component too large"
+      ],
+      [
+        "Residual current",
+        "Grounding fault",
+        "Low insulation resistance",
+        "Inverter overtemperature",
+        null,
+        null,
+        null,
+        null,
+        null,
+        "Energy storage equipment abnormal",
+        "Islanding",
+        null,
+        null,
+        null,
+        "Off-grid output overload",
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        "External fan fault",
+        "Energy storage reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Meter lost",
+        "BMS lost",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "key": "inverter_alarms",
+    "mode": "active",
+    "name": "Inverter Alarms",
+    "type": "alarm-sensor"
   },
   {
     "addresses": [

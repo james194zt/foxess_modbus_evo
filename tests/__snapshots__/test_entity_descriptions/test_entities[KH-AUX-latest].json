@@ -319,6 +319,18 @@
   },
   {
     "addresses": [
+      39169,
+      39168
+    ],
+    "invert_sign": true,
+    "key": "grid_status",
+    "name": "Grid Status",
+    "scale": 0.001,
+    "signed": true,
+    "type": "grid_status_sensor"
+  },
+  {
+    "addresses": [
       46502,
       46501
     ],
@@ -388,6 +400,140 @@
     "scale": 0.1,
     "signed": true,
     "type": "sensor"
+  },
+  {
+    "addresses": [
+      39067,
+      39068,
+      39069
+    ],
+    "alarms": [
+      [
+        "PV Over-voltage",
+        "DC arc fault",
+        "String reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Grid power outage",
+        "Abnormal grid voltage",
+        null,
+        null,
+        "Abnormal grid frequency",
+        null,
+        null,
+        "Output overcurrent",
+        "Output DC component too large"
+      ],
+      [
+        "Residual current",
+        "Grounding fault",
+        "Low insulation resistance",
+        "Inverter overtemperature",
+        null,
+        null,
+        null,
+        null,
+        null,
+        "Energy storage equipment abnormal",
+        "Islanding",
+        null,
+        null,
+        null,
+        "Off-grid output overload",
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        "External fan fault",
+        "Energy storage reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Meter lost",
+        "BMS lost",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "key": "inverter_alarm_last",
+    "mode": "last_event",
+    "name": "Inverter Alarm Last Event",
+    "type": "alarm-sensor"
+  },
+  {
+    "addresses": [
+      39067,
+      39068,
+      39069
+    ],
+    "alarms": [
+      [
+        "PV Over-voltage",
+        "DC arc fault",
+        "String reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Grid power outage",
+        "Abnormal grid voltage",
+        null,
+        null,
+        "Abnormal grid frequency",
+        null,
+        null,
+        "Output overcurrent",
+        "Output DC component too large"
+      ],
+      [
+        "Residual current",
+        "Grounding fault",
+        "Low insulation resistance",
+        "Inverter overtemperature",
+        null,
+        null,
+        null,
+        null,
+        null,
+        "Energy storage equipment abnormal",
+        "Islanding",
+        null,
+        null,
+        null,
+        "Off-grid output overload",
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        "External fan fault",
+        "Energy storage reverse connection",
+        null,
+        null,
+        null,
+        null,
+        "Meter lost",
+        "BMS lost",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "key": "inverter_alarms",
+    "mode": "active",
+    "name": "Inverter Alarms",
+    "type": "alarm-sensor"
   },
   {
     "addresses": [

@@ -34,7 +34,7 @@ When the BMS raises a condition (deep discharge, over-temp, etc.), bits in **Fau
 - These are **state**, not necessarily the cumulative count Fox shows in “Number of deep discharge event”.
 - Still essential: note the **raw value** and **which bits** changed when Fox reports a new harmful event.
 
-Probe entities (disabled by default): `bms_fault_1_raw` … `bms_fault_6_raw`.
+Probe entities: `bms_fault_1_raw` … `bms_fault_6_raw` (enabled by default on supported models).
 
 Decode a raw fault value to bits (Developer Tools → Template), replacing the entity id:
 

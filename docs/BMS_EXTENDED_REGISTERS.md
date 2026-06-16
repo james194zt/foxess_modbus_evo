@@ -40,7 +40,7 @@ Compare raw values with Fox Cloud Real-time (especially while values change):
 |----------|----------|-------|
 | 37613–37616 | (gap) | Not in public PDF — candidate for Ah throughput counters |
 | 37621–37623 | (gap) | Not in public PDF — **probe sensors** `bms_gap_37621` etc. |
-| 37626–37631 | BMS1 Fault1–6 | Bitfields — **probe sensors** `bms_fault_1_raw` … `bms_fault_6_raw` |
+| 37626–37631 | BMS1 Fault1–6 | Bitfields — sensors `bms_fault_1_raw` … `bms_fault_6_raw` (enabled by default) |
 | 37634 | reserve | Unknown |
 
 See **[PROBE_BMS_HEALTH_REGISTERS.md](PROBE_BMS_HEALTH_REGISTERS.md)** for harmful-event and health correlation tests.
