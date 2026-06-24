@@ -1050,8 +1050,7 @@ def _h3_current_voltage_power_entities() -> Iterable[EntityFactory]:
         addresses=[
             ModbusAddressesSpec(holding=[39135, 39134], models=Inv.H3_PRO_SET | Inv.H3_SMART),
         ],
-        # This one appears to be in mW, despite what the spec says
-        scale=0.000001,
+        scale=0.001,
     )
     yield _inv_power(
         phase=None,
@@ -1722,7 +1721,7 @@ def _inverter_entities() -> Iterable[EntityFactory]:
             ),
             ModbusAddressesSpec(holding=[31015], models=Inv.H3_SET),
             ModbusAddressesSpec(holding=[38847, 38846], models=Inv.H3_PRO_PRE122),
-            ModbusAddressesSpec(holding=[39139], models=Inv.H3_PRO_122),
+            ModbusAddressesSpec(holding=[39139], models=Inv.H3_PRO_122 | Inv.H3_SMART | Inv.EVO),
         ],
         entity_registry_enabled_default=False,
         name="Grid Frequency",
@@ -1793,7 +1792,7 @@ def _inverter_entities() -> Iterable[EntityFactory]:
         native_unit_of_measurement="°C",
         scale=0.1,
         round_to=0.5,
-        validate=[Range(0, 100)],
+        validate=[Range(-50, 100)],
     )
     yield ModbusSensorDescription(
         key="ambtemp",
@@ -1812,7 +1811,7 @@ def _inverter_entities() -> Iterable[EntityFactory]:
         native_unit_of_measurement="°C",
         scale=0.1,
         round_to=0.5,
-        validate=[Range(0, 100)],
+        validate=[Range(-50, 100)],
     )
     yield ModbusBatterySensorDescription(
         key="bms_charge_rate",
@@ -2408,7 +2407,7 @@ def _inverter_entities() -> Iterable[EntityFactory]:
             icon="mdi:export",
             scale=scale,
             # unsure if this actually goes negative
-            validate=[Range(-100, 100)],
+            validate=[Range(-200, 200)],
         )
 
     yield _total_yield_today(
@@ -2664,7 +2663,7 @@ def _bms_entities() -> Iterable[EntityFactory]:
             state_class=SensorStateClass.MEASUREMENT,
             native_unit_of_measurement="°C",
             scale=0.1,
-            validate=[Range(0, 100)],
+            validate=[Range(-50, 100)],
         )
         yield ModbusBatterySensorDescription(
             key=f"bms_cell_temp_high{key_suffix}",
@@ -2675,7 +2674,7 @@ def _bms_entities() -> Iterable[EntityFactory]:
             state_class=SensorStateClass.MEASUREMENT,
             native_unit_of_measurement="°C",
             scale=0.1,
-            validate=[Range(0, 100)],
+            validate=[Range(-50, 100)],
         )
         yield ModbusBatterySensorDescription(
             key=f"bms_cell_temp_low{key_suffix}",
@@ -2686,7 +2685,7 @@ def _bms_entities() -> Iterable[EntityFactory]:
             state_class=SensorStateClass.MEASUREMENT,
             native_unit_of_measurement="°C",
             scale=0.1,
-            validate=[Range(0, 100)],
+            validate=[Range(-50, 100)],
         )
         yield ModbusBatterySensorDescription(
             key=f"bms_cell_mv_high{key_suffix}",
@@ -3327,7 +3326,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
     yield ModbusSensorDescription(
         key="export_power_limit",
         addresses=[
-            ModbusAddressesSpec(holding=[46617, 46616], models=Inv.KH_133),
+            ModbusAddressesSpec(holding=[46617, 46616], models=Inv.KH_133 | Inv.H3_SMART),
         ],
         name="Export Power Limit",
         device_class=SensorDeviceClass.POWER,
@@ -3339,7 +3338,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
     yield ModbusNumberDescription(
         key="export_power_limit",
         addresses=[
-            ModbusAddressesSpec(holding=[46617, 46616], models=Inv.KH_133),
+            ModbusAddressesSpec(holding=[46617, 46616], models=Inv.KH_133 | Inv.H3_SMART),
         ],
         name="Export Power Limit",
         mode=NumberMode.BOX,
@@ -3357,7 +3356,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
     yield ModbusSensorDescription(
         key="import_power_limit",
         addresses=[
-            ModbusAddressesSpec(holding=[46502, 46501], models=Inv.KH_133),
+            ModbusAddressesSpec(holding=[46502, 46501], models=Inv.KH_133 | Inv.H3_SMART),
         ],
         name="Import Power Limit",
         device_class=SensorDeviceClass.POWER,
@@ -3369,7 +3368,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
     yield ModbusNumberDescription(
         key="import_power_limit",
         addresses=[
-            ModbusAddressesSpec(holding=[46502, 46501], models=Inv.KH_133),
+            ModbusAddressesSpec(holding=[46502, 46501], models=Inv.KH_133 | Inv.H3_SMART),
         ],
         name="Import Power Limit",
         mode=NumberMode.BOX,

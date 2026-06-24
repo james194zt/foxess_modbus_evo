@@ -18,8 +18,10 @@ Supported models include:
 
 - FoxESS **EVO 10-H** (this fork)
 - FoxESS H1 (including AC1, AIO-H1 and G2)
-- FoxESS H3 (including AC3 and AIO-H3)
+- FoxESS H3 (including AC3 and AOI-H3)
 - FoxESS H3 PRO / SMART
+- FoxESS P1
+- FoxESS P3-Pro / P3-Smart (upstream)
 - FoxESS KH
 - Kuara H3, Sonnenkraft SK-HWR, STAR, Solavita SP, a-TroniX AX, Enpal, 1KOMMA5°
 

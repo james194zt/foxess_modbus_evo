@@ -21,17 +21,6 @@
   },
   {
     "addresses": [
-      37612,
-      37616
-    ],
-    "key": "battery_ah_remaining",
-    "name": "Battery Remaining Capacity",
-    "scale": 0.1,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
       39238,
       39237
     ],
@@ -70,7 +59,7 @@
     ],
     "key": "battery_charge_today",
     "name": "Battery Charge Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -81,7 +70,7 @@
     ],
     "key": "battery_charge_total",
     "name": "Battery Charge Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -125,7 +114,7 @@
     ],
     "key": "battery_discharge_today",
     "name": "Battery Discharge Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -136,7 +125,7 @@
     ],
     "key": "battery_discharge_total",
     "name": "Battery Discharge Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -156,6 +145,26 @@
     ],
     "key": "battery_soc_2",
     "name": "Battery 2 SoC",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      37624
+    ],
+    "key": "battery_soh_1",
+    "name": "Battery 1 SoH",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      38322
+    ],
+    "key": "battery_soh_2",
+    "name": "Battery 2 SoH",
     "scale": null,
     "signed": false,
     "type": "sensor"
@@ -198,26 +207,6 @@
     "name": "Battery 2 Voltage",
     "scale": 0.1,
     "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37633
-    ],
-    "key": "bms_ah_fcc",
-    "name": "BMS FCC Capacity",
-    "scale": 0.1,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37616
-    ],
-    "key": "bms_ah_nominal",
-    "name": "BMS Nominal Capacity",
-    "scale": 0.1,
-    "signed": false,
     "type": "sensor"
   },
   {
@@ -298,126 +287,6 @@
     "name": "BMS 2 Cell Temp Low",
     "scale": 0.1,
     "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37614
-    ],
-    "key": "bms_charge_capacity_throughput_ah",
-    "name": "BMS Charge Capacity Throughput",
-    "scale": 0.375,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37635
-    ],
-    "key": "bms_design_energy_wh",
-    "name": "BMS Design Energy",
-    "scale": 10,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37613
-    ],
-    "key": "bms_discharge_capacity_throughput_ah",
-    "name": "BMS Discharge Capacity Throughput",
-    "scale": 0.26666666666666666,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37626
-    ],
-    "key": "bms_fault_1_raw",
-    "name": "BMS1 Fault1 Raw",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37627
-    ],
-    "key": "bms_fault_2_raw",
-    "name": "BMS1 Fault2 Raw",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37628
-    ],
-    "key": "bms_fault_3_raw",
-    "name": "BMS1 Fault3 Raw",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37629
-    ],
-    "key": "bms_fault_4_raw",
-    "name": "BMS1 Fault4 Raw",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37630
-    ],
-    "key": "bms_fault_5_raw",
-    "name": "BMS1 Fault5 Raw",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37631
-    ],
-    "key": "bms_fault_6_raw",
-    "name": "BMS1 Fault6 Raw",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37621
-    ],
-    "key": "bms_gap_37621",
-    "name": "BMS Gap Register 37621",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37622
-    ],
-    "key": "bms_gap_37622",
-    "name": "BMS Gap Register 37622",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37623
-    ],
-    "key": "bms_gap_37623",
-    "name": "BMS Gap Register 37623",
-    "scale": null,
-    "signed": false,
     "type": "sensor"
   },
   {
@@ -582,6 +451,27 @@
   },
   {
     "addresses": [
+      46617,
+      46616
+    ],
+    "key": "export_power_limit",
+    "name": "Export Power Limit",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46617,
+      46616
+    ],
+    "key": "export_power_limit",
+    "name": "Export Power Limit",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
       38815,
       38814
     ],
@@ -631,7 +521,7 @@
     ],
     "key": "feed_in_energy_today",
     "name": "Feed-in Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -642,7 +532,7 @@
     ],
     "key": "feed_in_energy_total",
     "name": "Feed-in Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -697,7 +587,7 @@
     ],
     "key": "grid_consumption_energy_today",
     "name": "Grid Consumption Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -708,7 +598,7 @@
     ],
     "key": "grid_consumption_energy_total",
     "name": "Grid Consumption Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -788,12 +678,33 @@
   },
   {
     "addresses": [
+      46502,
+      46501
+    ],
+    "key": "import_power_limit",
+    "name": "Import Power Limit",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46502,
+      46501
+    ],
+    "key": "import_power_limit",
+    "name": "Import Power Limit",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
       39628,
       39627
     ],
     "key": "input_energy_today",
     "name": "Input Energy Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -804,7 +715,7 @@
     ],
     "key": "input_energy_total",
     "name": "Input Energy Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -1010,140 +921,6 @@
       39068,
       39069
     ],
-    "alarms": [
-      [
-        "PV Over-voltage",
-        "DC arc fault",
-        "String reverse connection",
-        null,
-        null,
-        null,
-        null,
-        "Grid power outage",
-        "Abnormal grid voltage",
-        null,
-        null,
-        "Abnormal grid frequency",
-        null,
-        null,
-        "Output overcurrent",
-        "Output DC component too large"
-      ],
-      [
-        "Residual current",
-        "Grounding fault",
-        "Low insulation resistance",
-        "Inverter overtemperature",
-        null,
-        null,
-        null,
-        null,
-        null,
-        "Energy storage equipment abnormal",
-        "Islanding",
-        null,
-        null,
-        null,
-        "Off-grid output overload",
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        "External fan fault",
-        "Energy storage reverse connection",
-        null,
-        null,
-        null,
-        null,
-        "Meter lost",
-        "BMS lost",
-        null,
-        null,
-        null,
-        null,
-        null
-      ]
-    ],
-    "key": "inverter_alarm_last",
-    "mode": "last_event",
-    "name": "Inverter Alarm Last Event",
-    "type": "alarm-sensor"
-  },
-  {
-    "addresses": [
-      39067,
-      39068,
-      39069
-    ],
-    "alarms": [
-      [
-        "PV Over-voltage",
-        "DC arc fault",
-        "String reverse connection",
-        null,
-        null,
-        null,
-        null,
-        "Grid power outage",
-        "Abnormal grid voltage",
-        null,
-        null,
-        "Abnormal grid frequency",
-        null,
-        null,
-        "Output overcurrent",
-        "Output DC component too large"
-      ],
-      [
-        "Residual current",
-        "Grounding fault",
-        "Low insulation resistance",
-        "Inverter overtemperature",
-        null,
-        null,
-        null,
-        null,
-        null,
-        "Energy storage equipment abnormal",
-        "Islanding",
-        null,
-        null,
-        null,
-        "Off-grid output overload",
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        "External fan fault",
-        "Energy storage reverse connection",
-        null,
-        null,
-        null,
-        null,
-        "Meter lost",
-        "BMS lost",
-        null,
-        null,
-        null,
-        null,
-        null
-      ]
-    ],
-    "key": "inverter_alarms",
-    "mode": "active",
-    "name": "Inverter Alarms",
-    "type": "alarm-sensor"
-  },
-  {
-    "addresses": [
-      39067,
-      39068,
-      39069
-    ],
     "faults": [
       [
         "PV Over-voltage",
@@ -1230,7 +1007,7 @@
     ],
     "key": "load_energy_today",
     "name": "Load Energy Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -1285,7 +1062,7 @@
     ],
     "key": "load_power_total",
     "name": "Load Energy Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -1302,7 +1079,7 @@
     "addresses": [
       36001
     ],
-    "is_hex": false,
+    "is_hex": true,
     "key": "master_version",
     "name": "Version: Master",
     "type": "sensor"
@@ -1559,100 +1336,19 @@
     "type": "sensor"
   },
   {
-    "addresses": [
-      39079
-    ],
-    "key": "pv5_current",
-    "name": "PV5 Current",
-    "scale": 0.01,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "key": "pv5_energy_total",
-    "method": "left",
-    "name": "PV5 Power Total",
-    "source": "pv5_power",
-    "type": "integration-sensor",
-    "unit_time": "h"
-  },
-  {
-    "addresses": [
-      39288,
-      39287
-    ],
-    "key": "pv5_power",
-    "name": "PV5 Power",
-    "scale": 0.001,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      39078
-    ],
-    "key": "pv5_voltage",
-    "name": "PV5 Voltage",
-    "scale": 0.1,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      39081
-    ],
-    "key": "pv6_current",
-    "name": "PV6 Current",
-    "scale": 0.01,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "key": "pv6_energy_total",
-    "method": "left",
-    "name": "PV6 Power Total",
-    "source": "pv6_power",
-    "type": "integration-sensor",
-    "unit_time": "h"
-  },
-  {
-    "addresses": [
-      39290,
-      39289
-    ],
-    "key": "pv6_power",
-    "name": "PV6 Power",
-    "scale": 0.001,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      39080
-    ],
-    "key": "pv6_voltage",
-    "name": "PV6 Voltage",
-    "scale": 0.1,
-    "signed": true,
-    "type": "sensor"
-  },
-  {
     "key": "pv_power_now",
     "name": "PV Power",
     "sources": [
       "pv1_power",
       "pv2_power",
       "pv3_power",
-      "pv4_power",
-      "pv5_power",
-      "pv6_power"
+      "pv4_power"
     ],
     "type": "lambda"
   },
   {
     "addresses": [
-      38847,
-      38846
+      39139
     ],
     "key": "rfreq",
     "name": "Grid Frequency",
@@ -1697,7 +1393,7 @@
     "addresses": [
       36002
     ],
-    "is_hex": false,
+    "is_hex": true,
     "key": "slave_version",
     "name": "Version: Slave",
     "type": "sensor"
@@ -1709,7 +1405,7 @@
     ],
     "key": "solar_energy_today",
     "name": "Solar Generation Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -1720,7 +1416,7 @@
     ],
     "key": "solar_energy_total",
     "name": "Solar Generation Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
@@ -1731,7 +1427,7 @@
     ],
     "key": "total_yield_today",
     "name": "Yield Today",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": true,
     "type": "sensor"
   },
@@ -1742,7 +1438,7 @@
     ],
     "key": "total_yield_total",
     "name": "Yield Total",
-    "scale": 0.1,
+    "scale": 0.01,
     "signed": false,
     "type": "sensor"
   },
