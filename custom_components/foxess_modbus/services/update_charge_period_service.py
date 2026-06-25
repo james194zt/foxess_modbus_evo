@@ -1,6 +1,5 @@
 """Defines the services to update charge periods"""
 
-import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import time
@@ -17,15 +16,12 @@ from ..entities.modbus_charge_period_sensors import charge_period_start_register
 from ..entities.modbus_charge_period_sensors import is_time_value_valid
 from ..entities.modbus_charge_period_sensors import parse_time_value
 from ..entities.modbus_charge_period_sensors import serialize_time_to_value
+from ..client.modbus_client import ModbusClientFailedError
 from ..modbus_controller import ModbusController
 from ..vendor.pymodbus import ModbusIOException
 from .utils import get_controller_from_friendly_name_or_device_id
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
-
-# EVO/H3-Smart mode planner: time-group must be enabled before 48010+ period writes.
-EVO_CHARGE_TIME_GROUP_ENABLE_ADDRESS = 48000
-EVO_CHARGE_TIME_GROUP_ENABLE_VALUE = 1
 
 
 def _integer(value: Any) -> int:
@@ -146,6 +142,75 @@ class ChargePeriod:
     end: time
 
 
+def _is_illegal_address_error(err: BaseException) -> bool:
+    return "IllegalAddress" in str(err)
+
+
+def _without_mode_register(
+    writes: list[tuple[int, int]],
+    mode_address: int | None,
+) -> list[tuple[int, int]]:
+    if mode_address is None:
+        return writes
+    return [(address, value) for address, value in writes if address != mode_address]
+
+
+def _charge_period_diagnostics(
+    controller: ModbusController,
+    addresses: Any,
+) -> str:
+    """Summarise current Modbus reads for charge-period registers."""
+    parts: list[str] = []
+    for label, addr in (
+        ("grid", addresses.enable_charge_from_grid_address),
+        ("start", addresses.period_start_address),
+        ("end", addresses.period_end_address),
+        *([("mode", addresses.mode_address)] if addresses.mode_address is not None else []),
+    ):
+        value = controller.read(addr, signed=False)
+        parts.append(f"{label} @{addr}={value if value is not None else 'unreadable'}")
+    return ", ".join(parts)
+
+
+async def _write_contiguous_registers(
+    controller: ModbusController,
+    writes: list[tuple[int, int]],
+    *,
+    diagnostics: str,
+) -> None:
+    """One FC16 block per period — validated on EVO 10-H in nathanmarlor/foxess_modbus#1134."""
+    write_start_address = min(w[0] for w in writes)
+    write_end_address = max(w[0] for w in writes)
+    write_values: list[int | None] = [None] * (write_end_address - write_start_address + 1)
+    for address, value in writes:
+        write_values[address - write_start_address] = value
+    if any(x is None for x in write_values):
+        raise ValueError(f"Incomplete charge-period write block: {writes}")
+
+    async def _fail(ex: BaseException) -> None:
+        detail = f" Charge-period reads before write: {diagnostics}."
+        raise HomeAssistantError(
+            f"Charge-period write failed at {write_start_address} values {write_values}: {ex}.{detail} "
+            "Charge-period entities are read-only in HA — use foxess_modbus.update_all_charge_periods. "
+            "If IllegalAddress persists, this EVO firmware may not allow Modbus charge-period writes; "
+            "use the Remote Control → Force Charge select instead (requires foxess_modbus update with EVO remote control)."
+        ) from ex
+
+    try:
+        await controller.write_registers(write_start_address, write_values)  # type: ignore[arg-type]
+        return
+    except (ModbusIOException, ModbusClientFailedError) as ex:
+        if not _is_illegal_address_error(ex):
+            await _fail(ex)
+        _LOGGER.warning("Batch charge-period write failed (%s); trying single-register writes", ex)
+
+    for address, value in sorted(writes, key=lambda item: item[0]):
+        try:
+            await controller.write_register(address, value)
+        except (ModbusIOException, ModbusClientFailedError) as ex:
+            await _fail(ex)
+
+
 async def _update_all_charge_periods(
     controllers: list[ModbusController],
     service_data: ServiceCall,
@@ -165,90 +230,6 @@ async def _update_all_charge_periods(
         )
 
     await _set_charge_periods(controller, charge_periods)
-
-
-def _is_illegal_address(err: BaseException) -> bool:
-    return "IllegalAddress" in str(err)
-
-
-def _is_evo_charge_period_config(config: Any) -> bool:
-    return config.addresses.period_start_address in (48011, 48021)
-
-
-async def _enable_evo_charge_time_group(controller: ModbusController) -> None:
-    try:
-        await controller.write_register(
-            EVO_CHARGE_TIME_GROUP_ENABLE_ADDRESS,
-            EVO_CHARGE_TIME_GROUP_ENABLE_VALUE,
-        )
-        await asyncio.sleep(0.25)
-    except Exception as ex:
-        _LOGGER.warning("Could not enable EVO charge time group (register 48000): %s", ex)
-
-
-async def _write_charge_period_registers(
-    controller: ModbusController,
-    config: Any,
-    writes: list[tuple[int, int]],
-) -> None:
-    if _is_evo_charge_period_config(config):
-        await _enable_evo_charge_time_group(controller)
-
-    by_address = dict(writes)
-    start_addr = config.addresses.period_start_address
-    end_addr = config.addresses.period_end_address
-    grid_addr = config.addresses.enable_charge_from_grid_address
-    mode_addr = config.addresses.mode_address
-
-    async def _full_block() -> None:
-        write_start_address = min(by_address)
-        write_end_address = max(by_address)
-        write_values: list[int | None] = [None] * (write_end_address - write_start_address + 1)
-        for address, value in writes:
-            write_values[address - write_start_address] = value
-        assert not any(x is None for x in write_values)
-        await controller.write_registers(write_start_address, write_values)  # type: ignore[arg-type]
-
-    async def _start_end_block_then_singles() -> None:
-        await controller.write_registers(
-            start_addr,
-            [by_address[start_addr], by_address[end_addr]],
-        )
-        await asyncio.sleep(0.2)
-        await controller.write_register(grid_addr, by_address[grid_addr])
-        if mode_addr is not None and mode_addr in by_address:
-            try:
-                await controller.write_register(mode_addr, by_address[mode_addr])
-            except Exception as ex:
-                _LOGGER.warning(
-                    "EVO charge period mode register %s not writable (continuing): %s",
-                    mode_addr,
-                    ex,
-                )
-
-    last_err: Exception | None = None
-    for attempt_name, attempt in (
-        ("full block", _full_block),
-        ("start/end block + singles", _start_end_block_then_singles),
-    ):
-        try:
-            await attempt()
-            return
-        except Exception as ex:
-            last_err = ex
-            if not _is_illegal_address(ex):
-                raise
-            _LOGGER.warning(
-                "EVO charge period %s write failed (%s); trying fallback",
-                attempt_name,
-                ex,
-            )
-
-    if isinstance(last_err, ModbusIOException):
-        raise HomeAssistantError(str(last_err) or "Modbus IO error writing charge period") from last_err
-    if last_err is not None:
-        raise HomeAssistantError(str(last_err)) from last_err
-    raise HomeAssistantError("Modbus IO error writing charge period")
 
 
 async def _update_charge_period(
@@ -323,6 +304,7 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
 
     # Write each charge period separately (nathanmarlor/foxess_modbus#1134 — EVO 48010–48013 / 48020–48023).
     for charge_period, config in zip(charge_periods, controller.charge_periods, strict=True):
+        diagnostics = _charge_period_diagnostics(controller, config.addresses)
         writes: list[tuple[int, int]] = [
             (
                 config.addresses.period_start_address,
@@ -342,17 +324,38 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
             ),
         ]
         if config.addresses.mode_address is not None:
-            mode_value = (
-                config.addresses.mode_charge_value
-                if charge_period.enable_charge_from_grid
-                else config.addresses.mode_no_charge_value
-            )
-            writes.append((config.addresses.mode_address, mode_value))
+            mode_readable = controller.read(config.addresses.mode_address, signed=False) is not None
+            if mode_readable:
+                mode_value = (
+                    config.addresses.mode_charge_value
+                    if charge_period.enable_charge_from_grid
+                    else config.addresses.mode_no_charge_value
+                )
+                writes.append((config.addresses.mode_address, mode_value))
+            else:
+                _LOGGER.info(
+                    "Skipping charge-period mode register %s (unreadable on this firmware)",
+                    config.addresses.mode_address,
+                )
 
         try:
-            await _write_charge_period_registers(controller, config, writes)
-        except HomeAssistantError:
-            raise
+            await _write_contiguous_registers(controller, writes, diagnostics=diagnostics)
+        except HomeAssistantError as ex:
+            if (
+                config.addresses.mode_address is not None
+                and _is_illegal_address_error(ex)
+                and any(address == config.addresses.mode_address for address, _ in writes)
+            ):
+                reduced = _without_mode_register(writes, config.addresses.mode_address)
+                _LOGGER.warning(
+                    "Charge-period write including mode %s failed; retrying 48010–48012 only",
+                    config.addresses.mode_address,
+                )
+                await _write_contiguous_registers(controller, reduced, diagnostics=diagnostics)
+            else:
+                raise
         except ModbusIOException as ex:
             _LOGGER.warning(ex, exc_info=True)
             raise HomeAssistantError(str(ex) or "Modbus IO error writing charge period") from ex
+        except ModbusClientFailedError as ex:
+            raise HomeAssistantError(str(ex)) from ex
