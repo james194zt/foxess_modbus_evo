@@ -3094,8 +3094,9 @@ def _configuration_entities() -> Iterable[EntityFactory]:
         },
     )
 
-    # EVO reads work mode as 1-based but writes 0-based (e.g. write 0 → reads back as 1 "Self Use").
-    # 255 indicates the inverter is under external remote control (read-only state).
+    # EVO 49203 uses the same read-encoded values as H3 PRO/Smart on this register (1=Self Use,
+    # 2=Feed-in First, …). Do not use a separate write_map — writing 1 for Feed-in leaves the
+    # register at read-value 1 (Self Use), which matches the reported "instant revert" bug.
     yield ModbusWorkModeSelectDescription(
         key="work_mode",
         address=[
@@ -3108,12 +3109,6 @@ def _configuration_entities() -> Iterable[EntityFactory]:
             3: "Back-up",
             4: "Peak Shaving",
             255: "Remote Control",
-        },
-        write_map={
-            "Self Use": 0,
-            "Feed-in First": 1,
-            "Back-up": 2,
-            "Peak Shaving": 4,
         },
         include_remote_control_modes=False,
     )
