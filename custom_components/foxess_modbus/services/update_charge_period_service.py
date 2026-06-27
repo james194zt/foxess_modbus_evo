@@ -422,19 +422,14 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
             ),
         ]
         if config.addresses.mode_address is not None:
-            mode_readable = controller.read(config.addresses.mode_address, signed=False) is not None
-            if mode_readable:
-                mode_value = (
-                    config.addresses.mode_charge_value
-                    if charge_period.enable_charge_from_grid
-                    else config.addresses.mode_no_charge_value
-                )
-                writes.append((config.addresses.mode_address, mode_value))
-            else:
-                _LOGGER.info(
-                    "Skipping charge-period mode register %s (unreadable on this firmware)",
-                    config.addresses.mode_address,
-                )
+            # PR #1134: mode (48013/48023) must be written with the period block. Do not gate
+            # on controller.read() — 48013 is not polled into _data, so read always returns None.
+            mode_value = (
+                config.addresses.mode_charge_value
+                if charge_period.enable_charge_from_grid
+                else config.addresses.mode_no_charge_value
+            )
+            writes.append((config.addresses.mode_address, mode_value))
 
         try:
             await _write_charge_period_registers(
