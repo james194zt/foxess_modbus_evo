@@ -286,7 +286,31 @@ async def _write_charge_period_registers(
                 _LOGGER.warning("Charge-period %s sequential failed (%s)", name, ex)
         return False
 
+    async def _try_evo_times_mode_then_grid(all_writes: list[tuple[int, int]]) -> bool:
+        """Write 48011-48013 first, then 48010 — some EVO firmware rejects grid in the same FC16."""
+        grid_addr = addresses.enable_charge_from_grid_address
+        times_mode = [(a, v) for a, v in all_writes if a != grid_addr]
+        grid = [(a, v) for a, v in all_writes if a == grid_addr]
+        if not times_mode or not grid:
+            return False
+        for name, steps in (
+            ("times+mode then grid (batch)", (_try_batches, _try_batches)),
+            ("times+mode then grid (sequential)", (_try_sequential, _try_sequential)),
+        ):
+            try:
+                await steps[0](times_mode)
+                await steps[1](grid)
+                return True
+            except (ModbusIOException, ModbusClientFailedError) as ex:
+                if not _is_illegal_address_error(ex):
+                    raise
+                _LOGGER.warning("Charge-period %s failed (%s)", name, ex)
+        return False
+
     if await _try_write_strategies(writes):
+        return
+
+    if evo_style and await _try_evo_times_mode_then_grid(writes):
         return
 
     if evo_style and addresses.mode_address is not None:
