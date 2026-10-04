@@ -9,6 +9,7 @@ something is inferred rather than confirmed, it is marked **unverified**.
 
 - **Inverter:** EVO 10-5-H, Modbus TCP, slave 247
 - **Date:** 2026-10-04
+- **Modbus protocol version** (registers 39000–39001): V1.05.04.00
 - **Firmware:** not yet recorded
 
 ## TL;DR
@@ -148,11 +149,40 @@ Registers read back:
 
 A schedule set from the Fox app / cloud did not stop Modbus writes in any of these tests.
 
-**Modbus changes only partly reach the cloud.** After writing slots over Modbus, Fox Cloud's
-`scheduler/get` (and so the Fox app) showed the new slot values within a couple of minutes. But after
-switching the scheduler off over Modbus (`48000 = 0`, confirmed by reading the register), the cloud and the
-Fox app still showed Mode Scheduler as on more than 10 minutes later. Treat the registers as the truth, and
-be aware that saving in the Fox app while it shows a stale state may write that state back to the inverter.
+### Fox Cloud / Fox app don't reliably reflect Modbus changes
+
+- A slot change written over Modbus once appeared in Fox Cloud `scheduler/get` within ~2 minutes; another
+  (written with raw register writes) had not appeared after 20+ minutes while it was actively running.
+- The scheduler switch `48000` was never reflected: after switching it off over Modbus the cloud/app kept
+  showing Mode Scheduler, and after switching it on they kept showing the plain work mode.
+- The website did pick up a `49203` change (Feed-in) within a few minutes, but the Open API's
+  `device/setting/get` with `WorkMode` returns errno 42015 (not supported) on the EVO.
+
+Treat the registers as the truth. Saving in the Fox app while it shows a stale state may write that state
+back to the inverter.
+
+## Behaviour of a Force Charge slot
+
+Tested with the scheduler on, a Force Charge slot (`fd_pwr` 1000 W, `fd_soc` a few % above the current SoC)
+placed before the all-day Self-Use filler:
+
+- **Slot order:** the earlier slot wins where slots overlap — it charged even though the filler covers the
+  whole day.
+- **Power:** it charged from the grid at ~990 W, i.e. `fd_pwr` is honoured (Remote Control instead uses its
+  own Force Charge / Discharge Power settings, typically the inverter's full rating).
+- **Cut-off:** charging stopped at `fd_soc` (allow ~1 % for rounding / BMS vs system SoC). For the rest of the
+  slot the battery **held** at the cut-off and the house ran from the grid; the filler's Self Use resumed
+  when the slot ended.
+- **+8 flags:** written as `3` (what the app writes) it read back `0`, even with a raw write, yet grid charging
+  still worked. Integrations shouldn't depend on this field for Force Charge.
+- **Remote Control** Force Discharge overrode the active slot immediately; setting it back to Disable let the
+  slot resume.
+
+## SoC limits (scheduler off)
+
+`46610` (System Max SoC) **is writable**. Writing `99` while `46620` (Max SoC From Grid) was `100` failed with
+`IllegalValue` (not `IllegalAddress`): System Max can't be set below Max SoC From Grid. Lower `46620` first,
+then `46610`; to raise, write `46610` first, then `46620`. Single-register writes were accepted for both.
 
 Recommendations for integrations:
 
