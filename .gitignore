@@ -6,3 +6,5 @@ config/*
 
 # Output of scripts/fox_cloud_scheduler_dump.py (contains the inverter serial)
 fox_scheduler_*.json
+# Raw register snapshots (contain inverter and battery serials)
+research/

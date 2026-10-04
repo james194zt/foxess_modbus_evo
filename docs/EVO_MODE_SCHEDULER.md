@@ -224,6 +224,35 @@ be changed".
 6. Use the registers as the source of truth, never the Fox Cloud / app view.
 7. To cap a grid charge, use the slot's cut-off SoC (+5); the battery then holds until the slot ends.
 
+## Cross-check with the FoxESS Modbus protocol document
+
+FoxESS's *Modbus Protocol V1.05.03.00 (2025-01-15)* is the newest public version, but **it does not
+mention the EVO at all** (its model-specific notes cover H1, H1-G2, H3, H3 Pro and KH), and the EVO tested
+here reports protocol **V1.05.04.00**, newer than the document. Treat it as a guide, not as the EVO's spec.
+
+**Where it matches the EVO (confirmed by testing):** Table 3-11 "Time Period Table" has the same layout —
+`48000` "TimeMode Flag", 10-register groups from `48010`, start/end/work-mode/SoC/FDSOC/FDPWR at +0…+6,
+and the same work-mode codes (it also lists `4` Peak Shaving and `5` PowerStation for slots, untested).
+
+**Where the EVO differs from or goes beyond the document (found by testing):**
+
+| Topic | Document | EVO |
+|---|---|---|
+| Group +8 / +9 | "reserved" | the app writes `3`/`1`/`0` to +8 and `1` to +9 on groups 1–8; the inverter stores `0` in +8 for Modbus-written Force Charge slots |
+| `46620` Max SoC From Grid | not listed | exists; `46610` System Max can't be set below it |
+| `37033+` BMS slave versions | battery versions | `0x1000`, `0x2000`, … (slot numbers), even with 1 slave |
+| Partial block writes | "each block … can be read and written simultaneously" | writes covering part of a block are **rejected** (4 registers of a group, or `48000` alone) |
+| `49203` = 255 | not listed | reads 255 while under Remote Control |
+
+**Claims in the document that have NOT been tested on the EVO:**
+
+- Groups 1–8 (`48010–48089`) can be written as one 80-register block (also `48090–48169`, `48170–48249`).
+  If true, this would make schedule writes atomic.
+- Slot Max SoC and Min SoC On Grid `[10, 100]` with Min SoC On Grid ≥ global Min SoC (`46609`) and ≤ slot
+  Max; cut-off SoC `[slot Min SoC On Grid, 100]`. (Fox Cloud's scheduler reports a minimum of 5 for
+  minSocOnGrid and fdSoc.)
+- At most 24 groups (Fox Cloud reports `maxGroupCount: 96`).
+
 ## Relation to earlier work
 
 - **nathanmarlor/foxess_modbus#1071** mapped EVO charge periods onto the H1 `41xxx` registers, which do
