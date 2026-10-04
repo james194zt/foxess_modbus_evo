@@ -10,7 +10,7 @@ something is inferred rather than confirmed, it is marked **unverified**.
 - **Inverter:** EVO 10-5-H, Modbus TCP, slave 247
 - **Date:** 2026-10-04
 - **Modbus protocol version** (registers 39000–39001): V1.05.04.00
-- **Firmware:** not yet recorded
+- **Firmware:** Master 1.21, Slave 1.01, Manager 1.20 (registers 36001–36003)
 
 ## TL;DR
 
