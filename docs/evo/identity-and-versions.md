@@ -27,18 +27,12 @@ FoxESS protocol document · ❓ not yet tested.
 The Fox app's "Version_Master / Slave / Manager" and "Version_BCU" map as above. Integrations showing
 "BMS pack *n* version" from `37033`+ will show meaningless values on the EVO.
 
-## AFCI version — not found
+## AFCI version — not in the holding registers
 
-The Fox app shows "Version_AFCI" (0.37 on the test unit), but no register holding it has been found. The
-FoxESS document has no AFCI version register (only a "DC arc fault" alarm). Searched, looking for `0x0037`,
-`37` and ASCII "0.37":
-
-`30000–30059`, `31000–31099`, `36000–36199`, `37000–37299`, `37600–37699`, `38000–38099`, `38300–38339`,
-`39000–39299`, `40000–40099`, `41000–41049`, `44000–44049`, `46000–46049`, `46600–46699`, `49000–49259`.
-
-Ranges not yet searched include `30060–30999`, `32000–35999`, `39300–39999` and the `42xxx`, `45xxx`, `47xxx`
-blocks. It may also be reported only to the Fox datalogger. If you find it, please share the register and
-encoding.
+The Fox app shows "Version_AFCI" (0.37 on the test unit), but **no holding register from 30000 to 49999
+holds it** — every readable register in that range was read and checked for `0x0037`, `37` and ASCII "0.37".
+The FoxESS document has no AFCI version register either (only a "DC arc fault" alarm). It is most likely
+reported only to the Fox datalogger / cloud. Input registers were not searched.
 
 ## Readable ranges
 

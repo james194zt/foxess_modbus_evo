@@ -34,7 +34,9 @@ Write the block as a whole, e.g. `1,0,0,0,0,0,0,0,0,0` to switch on. ✅ A singl
 
 ### Time groups
 
-Group *N* (1-based) starts at **`48010 + 10 × (N − 1)`**. The Fox app manages groups **1–8**.
+Group *N* (1-based) starts at **`48010 + 10 × (N − 1)`**. The Fox app manages groups **1–8**. ✅ ⚠️ All
+**96** groups (`48010`–`48969`) are readable on the EVO, matching Fox Cloud's `maxGroupCount: 96` — the FoxESS
+document says 24. Groups beyond 8 held disabled copies of earlier app schedules.
 
 | Offset | Meaning | Encoding | Status |
 |---|---|---|---|
@@ -167,7 +169,7 @@ and gaps found on the EVO are marked ⚠️ above. The document also states — 
 
 - slot Max SoC and Min SoC On Grid are `[10, 100]`, Min SoC On Grid ≥ the global Minimum SoC (`46609`) and
   ≤ the slot Max SoC, and the cut-off SoC is `[slot Min SoC On Grid, 100]` (Fox Cloud reports a minimum of 5);
-- at most 24 groups (Fox Cloud reports `maxGroupCount: 96`);
+- at most 24 groups — ⚠️ the EVO has 96 readable groups (see above);
 - the table can also be written as four blocks: `48000–48009`, `48010–48089`, `48090–48169`, `48170–48249`.
 
 ## Relation to earlier foxess_modbus work
