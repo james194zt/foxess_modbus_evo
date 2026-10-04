@@ -171,7 +171,7 @@ update_all_charge_periods:
         object:
 get_evo_schedule:
   name: Get EVO Schedule
-  description: Reads the EVO Mode Scheduler (register 48000 and slots 1-8). See docs/EVO_MODE_SCHEDULER.md.
+  description: Reads the EVO Mode Scheduler (register 48000 and slots 1-8). See docs/evo/mode-scheduler.md.
   fields:
     inverter:
       name: Inverter

@@ -1,4 +1,4 @@
-"""Services to read and write the FoxESS EVO Mode Scheduler (see docs/EVO_MODE_SCHEDULER.md)"""
+"""Services to read and write the FoxESS EVO Mode Scheduler (see docs/evo/mode-scheduler.md)"""
 
 import asyncio
 import logging

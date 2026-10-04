@@ -3117,7 +3117,7 @@ def _configuration_entities() -> Iterable[EntityFactory]:
         },
         include_remote_control_modes=False,
     )
-    # While the Mode Scheduler is on, its slots override Work Mode (49203). See docs/EVO_MODE_SCHEDULER.md
+    # While the Mode Scheduler is on, its slots override Work Mode (49203). See docs/evo/mode-scheduler.md
     yield ModbusBinarySensorDescription(
         key="mode_scheduler",
         address=[ModbusAddressSpec(holding=48000, models=Inv.EVO)],

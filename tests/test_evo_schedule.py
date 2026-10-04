@@ -1,6 +1,6 @@
 """EVO Mode Scheduler encoding and write path, using register values captured from an EVO 10-5-H.
 
-See docs/EVO_MODE_SCHEDULER.md for how these captures were made.
+See docs/evo/mode-scheduler.md for how these captures were made.
 """
 
 from datetime import time

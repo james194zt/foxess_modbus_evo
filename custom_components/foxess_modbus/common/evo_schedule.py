@@ -1,4 +1,4 @@
-"""FoxESS EVO Mode Scheduler register layout (see docs/EVO_MODE_SCHEDULER.md).
+"""FoxESS EVO Mode Scheduler register layout (see docs/evo/mode-scheduler.md).
 
 Pure encode/decode/validation, with no Home Assistant or Modbus dependencies.
 """
