@@ -158,7 +158,8 @@ async def async_write_schedule(
     """Write changed groups as whole 10-register blocks, then the scheduler switch, then verify.
 
     `managed` must hold all MANAGED_GROUP_COUNT groups, or be None to only change the switch.
-    The inverter rejects writes covering part of a group, so a group is never written partially.
+    The inverter rejects writes covering part of a 10-register block (including 48000-48009, the
+    block holding the switch), so blocks are only ever written whole.
     """
     assert managed is None or len(managed) == MANAGED_GROUP_COUNT
 
@@ -184,7 +185,8 @@ async def async_write_schedule(
 
     if current_enabled != enabled:
         try:
-            await controller.write_register(SCHEDULER_ENABLE_ADDRESS, expected_raw[0])
+            # A single-register write to 48000 is rejected; the whole 48000-48009 block is accepted
+            await controller.write_registers(SCHEDULER_ENABLE_ADDRESS, expected_raw[:_FIRST_GROUP_OFFSET])
         except ModbusClientFailedError as ex:
             raise HomeAssistantError(f"Failed to set the scheduler switch ({SCHEDULER_ENABLE_ADDRESS}): {ex}") from ex
 

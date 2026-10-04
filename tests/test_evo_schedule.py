@@ -53,7 +53,10 @@ def _registers(capture: list[int]) -> dict[int, int]:
 
 
 class FakeEvo:
-    """Holding registers of an EVO that, like the real one, rejects writes covering part of a group."""
+    """Holding registers of an EVO that, like the real one, rejects writes covering part of a 10-register block.
+
+    The real inverter rejected both a 4-register group write and a single-register write to 48000.
+    """
 
     def __init__(self, capture: list[int], *, ignored_address: int | None = None) -> None:
         self.registers = _registers(capture)
@@ -64,8 +67,8 @@ class FakeEvo:
         return [self.registers.get(start + i, 0) for i in range(count)]
 
     async def write_registers(self, start: int, values: list[int]) -> None:
-        in_groups = start >= 48010
-        if in_groups and ((start - 48010) % GROUP_SIZE != 0 or len(values) != GROUP_SIZE):
+        in_blocks = start >= 48000
+        if in_blocks and ((start - 48000) % GROUP_SIZE != 0 or len(values) != GROUP_SIZE):
             raise ModbusClientFailedError("Error writing registers", "fake", "IllegalAddress")  # type: ignore[arg-type]
         self.writes.append((start, list(values)))
         for i, value in enumerate(values):
@@ -173,7 +176,7 @@ async def test_write_schedule_writes_whole_groups_then_switch() -> None:
         (48010, slot.to_registers()),
         (48020, _SELF_USE_FILLER.to_registers()),
         (48030, BLANK_GROUP.to_registers()),
-        (48000, [1]),
+        (48000, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
     ]
     assert enabled is True
     assert groups[0] == slot
@@ -194,7 +197,7 @@ async def test_set_enabled_only_writes_switch() -> None:
 
     enabled, _ = await evo_schedule_service.async_write_schedule(inverter, None, enabled=False)  # type: ignore[arg-type]
 
-    assert inverter.writes == [(48000, [0])]
+    assert inverter.writes == [(48000, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
     assert enabled is False
 
 

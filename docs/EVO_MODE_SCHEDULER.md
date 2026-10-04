@@ -15,9 +15,10 @@ something is inferred rather than confirmed, it is marked **unverified**.
 
 - `48000` is the scheduler master switch. `1` = the app's "Mode Scheduler" is active.
 - The schedule is a table of **time groups**, 10 registers each, starting at `48010`.
-- **Always write a whole group (all 10 registers) in one write.** The inverter rejects writes that cover
-  only part of a group. This is why earlier attempts (writing 4 registers per period) failed with
-  `IllegalAddress` / "Unknown error" on some inverters and worked on others.
+- **Always write whole 10-register blocks in one write**, including the `48000`–`48009` block that holds
+  the switch. The inverter rejects writes that cover only part of a block (even a single-register write to
+  `48000`). This is why earlier attempts (writing 4 registers per period) failed with `IllegalAddress` /
+  "Unknown error" on some inverters and worked on others.
 - Full-group writes are accepted **while a schedule set from the Fox app / cloud is active**. The
   commonly reported "the cloud makes the scheduler read-only to Modbus" was not reproduced (see
   [Write behaviour](#write-behaviour)).
@@ -32,6 +33,9 @@ something is inferred rather than confirmed, it is marked **unverified**.
 |---|---|
 | `48000` | Scheduler enable. `1` = Mode Scheduler on, `0` = off (inverter follows `49203`). |
 | `48001`–`48009` | Always `0` in every capture. |
+
+`48000`–`48009` behaves like a group: write all 10 registers together (e.g. `1,0,0,0,0,0,0,0,0,0`).
+A single-register write (FC6) to `48000` is rejected with `IllegalAddress`.
 
 ### Time groups
 
@@ -134,21 +138,22 @@ Registers read back:
 
 ## Write behaviour
 
-Tested with a schedule set from the Fox app and `48000 = 1`, writing to a disabled blank slot:
+| Write | Scheduler | Result |
+|---|---|---|
+| 4 registers of a group (enable, start, end, mode), FC16 | on (set from the Fox app) | **Rejected** (Home Assistant: "Unknown error") |
+| All 10 registers of a disabled group, FC16 | on (set from the Fox app) | **Accepted**, read back exactly |
+| `48000` alone, FC6 | off | **Rejected**, `Exception Response(134, 6, IllegalAddress)` |
+| `48000`–`48009` as one block, FC16 | off → on | **Accepted** |
+| All 10 registers of an *enabled* group, FC16 | on | **Accepted**, read back exactly |
 
-| Write | Result |
-|---|---|
-| 4 registers (enable, start, end, mode) with FC16 | **Rejected** (Home Assistant: "Unknown error") |
-| All 10 registers with FC16 | **Accepted**, read back exactly |
-
-Not yet tested: writing an *enabled* group, or writing `48000`, while the scheduler is running.
+A schedule set from the Fox app / cloud did not stop Modbus writes in any of these tests.
 
 Recommendations for integrations:
 
 1. Read the group table, change what you need, then write **each changed group as one 10-register
    block**. Never write a partial group.
 2. Set every field explicitly. Leftover values from earlier app edits are common.
-3. Write the groups first, then `48000`.
+3. Write the groups first, then the `48000`–`48009` block.
 4. Read back and compare. Fail loudly on mismatch instead of trying alternative write patterns.
 5. While `48000 = 1`, change behaviour through the groups, not `49203`.
 
