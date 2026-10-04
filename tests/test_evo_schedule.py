@@ -7,6 +7,7 @@ from datetime import time
 from typing import Any
 
 import pytest
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.foxess_modbus.client.modbus_client import ModbusClientFailedError
@@ -17,6 +18,10 @@ from custom_components.foxess_modbus.common.evo_schedule import ScheduleError
 from custom_components.foxess_modbus.common.evo_schedule import build_managed_groups
 from custom_components.foxess_modbus.common.evo_schedule import decode_groups
 from custom_components.foxess_modbus.common.evo_schedule import make_group
+from custom_components.foxess_modbus.common.types import InverterModel
+from custom_components.foxess_modbus.const import DOMAIN
+from custom_components.foxess_modbus.const import FRIENDLY_NAME
+from custom_components.foxess_modbus.const import INVERTER_BASE
 from custom_components.foxess_modbus.services import evo_schedule_service
 
 # 48000-48089 with the Fox app in Mode Scheduler and three slots plus the remaining-time filler
@@ -211,6 +216,21 @@ async def test_write_schedule_fails_when_read_back_differs() -> None:
             build_managed_groups([slot], _SELF_USE_FILLER),
             enabled=True,
         )
+
+
+async def test_get_evo_schedule_service_returns_schedule(hass: HomeAssistant) -> None:
+    inverter = FakeEvo(_CAPTURE_SCHEDULED)
+    inverter.inverter_details = {FRIENDLY_NAME: "EVO-10", INVERTER_BASE: InverterModel.EVO}  # type: ignore[attr-defined]
+    evo_schedule_service.register(hass, [inverter])  # type: ignore[list-item]
+
+    response = await hass.services.async_call(
+        DOMAIN, "get_evo_schedule", {"inverter": "EVO-10"}, blocking=True, return_response=True
+    )
+
+    assert response is not None
+    assert response["enabled"] is True
+    assert response["slots"][0]["work_mode"] == "force_charge"
+    assert len(response["slots"]) == MANAGED_GROUP_COUNT
 
 
 async def test_write_schedule_reports_rejected_write() -> None:
