@@ -12,6 +12,9 @@ _LOGGER = logging.getLogger(__package__)
 # If the PV voltage is below this value, count it as no sun
 _PV_VOLTAGE_THRESHOLD = 70
 
+# Work mode register value reported while the inverter is under remote control (EVO); never worth restoring
+_WORK_MODE_UNDER_REMOTE_CONTROL = 255
+
 
 class RemoteControlManager(EntityRemoteControlManager, ModbusControllerEntity):
     def __init__(
@@ -29,6 +32,8 @@ class RemoteControlManager(EntityRemoteControlManager, ModbusControllerEntity):
         self._charge_power: int | None = None
         self._max_soc_override: int | None = None
         self._is_updating = False
+        # Work mode register value from before remote control wrote its fallback mode, restored on Disable
+        self._work_mode_before_remote_control: int | None = None
 
         modbus_addresses = [
             *self._addresses.battery_soc,
@@ -91,6 +96,16 @@ class RemoteControlManager(EntityRemoteControlManager, ModbusControllerEntity):
 
     async def _update_disable(self) -> None:
         await self._disable_remote_control()
+        await self._restore_work_mode()
+
+    async def _restore_work_mode(self) -> None:
+        """Put back the work mode that was active before remote control replaced it with its fallback."""
+        previous = self._work_mode_before_remote_control
+        self._work_mode_before_remote_control = None
+        if previous is None or self._addresses.work_mode is None:
+            return
+        if self._read(self._addresses.work_mode, signed=False) != previous:
+            await self._controller.write_register(self._addresses.work_mode, previous)
 
     def _sum(self, addresses: list[int]) -> int | None:
         total = 0
@@ -280,6 +295,12 @@ class RemoteControlManager(EntityRemoteControlManager, ModbusControllerEntity):
         ):
             fallback_work_mode_value = self._addresses.work_mode_map[fallback_work_mode]
             current_work_mode = self._read(self._addresses.work_mode, signed=False)
+            if (
+                self._work_mode_before_remote_control is None
+                and current_work_mode is not None
+                and current_work_mode != _WORK_MODE_UNDER_REMOTE_CONTROL
+            ):
+                self._work_mode_before_remote_control = current_work_mode
             if current_work_mode != fallback_work_mode_value:
                 await self._controller.write_register(self._addresses.work_mode, fallback_work_mode_value)
 
