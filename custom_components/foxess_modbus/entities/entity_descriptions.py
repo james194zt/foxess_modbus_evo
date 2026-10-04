@@ -3094,8 +3094,8 @@ def _configuration_entities() -> Iterable[EntityFactory]:
         },
     )
 
-    # EVO reads work mode as 1-based but writes 0-based (e.g. write 0 → reads back as 1 "Self Use").
-    # 255 indicates the inverter is under external remote control (read-only state).
+    # EVO writes use the same 1-based codes as reads (hardware-confirmed: writing 2 reads back as Feed-in First).
+    # write_map only exists to keep 255, the read-only "under external remote control" state, out of the options.
     yield ModbusWorkModeSelectDescription(
         key="work_mode",
         address=[
@@ -3110,9 +3110,9 @@ def _configuration_entities() -> Iterable[EntityFactory]:
             255: "Remote Control",
         },
         write_map={
-            "Self Use": 0,
-            "Feed-in First": 1,
-            "Back-up": 2,
+            "Self Use": 1,
+            "Feed-in First": 2,
+            "Back-up": 3,
             "Peak Shaving": 4,
         },
         include_remote_control_modes=False,

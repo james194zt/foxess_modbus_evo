@@ -134,10 +134,11 @@ REMOTE_CONTROL_DESCRIPTION = ModbusRemoteControlFactory(
                 timeout_set=46002,
                 active_power=[46004, 46003],
                 work_mode=49203,
+                # Same 1-based codes as reads (hardware-confirmed on EVO 10-5-H)
                 work_mode_map={
-                    WorkMode.SELF_USE: 0,
-                    WorkMode.FEED_IN_FIRST: 1,
-                    WorkMode.BACK_UP: 2,
+                    WorkMode.SELF_USE: 1,
+                    WorkMode.FEED_IN_FIRST: 2,
+                    WorkMode.BACK_UP: 3,
                 },
                 max_soc=46610,
                 invbatpower=[39238, 39237],

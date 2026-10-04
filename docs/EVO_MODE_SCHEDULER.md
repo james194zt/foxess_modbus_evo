@@ -72,6 +72,10 @@ Group work modes use the same 1-based codes as register `49203`:
 Fox Cloud also lists `ForceCharge(BAT)` and `ForceDischarge(BAT)` for scheduler slots; their codes are
 unknown. Peak Shaving (code `4` in `49203`) is not offered by the scheduler.
 
+**`49203` is written with the same 1-based codes it reads.** Writing `2` read back as `2` and the Fox app
+showed Feed-in First. (Earlier reports that EVO writes are 0-based, e.g. #1134, don't hold on this
+inverter: writing `1` for "Feed-in" sets Self Use, which looks like the mode "reverting".)
+
 ### Fox Cloud field mapping
 
 The Fox Cloud scheduler API stores the same data. Its group fields map onto the registers like this:
