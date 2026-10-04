@@ -3,6 +3,7 @@
 See docs/evo/mode-scheduler.md for how these captures were made.
 """
 
+from dataclasses import replace
 from datetime import time
 from typing import Any
 
@@ -79,6 +80,9 @@ class FakeEvo:
         for i, value in enumerate(values):
             if start + i != self._ignored_address:
                 self.registers[start + i] = value
+        # Like the real EVO: a Force Charge group written over Modbus stores 0 in its flags (+8)
+        if start >= 48010 and values[3] == 6:
+            self.registers[start + 8] = 0
 
     async def write_register(self, address: int, value: int) -> None:
         await self.write_registers(address, [value])
@@ -184,8 +188,21 @@ async def test_write_schedule_writes_whole_groups_then_switch() -> None:
         (48000, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
     ]
     assert enabled is True
-    assert groups[0] == slot
+    assert groups[0] == replace(slot, flags=0)  # the inverter clears flags on a Force Charge slot
     assert groups[1] == _SELF_USE_FILLER
+
+
+async def test_force_charge_slot_passes_read_back_although_inverter_clears_flags() -> None:
+    inverter = FakeEvo(_CAPTURE_DELETED)
+    slot = make_group(start=time(21, 45), end=time(22, 5), work_mode="force_charge", fd_soc=58, fd_pwr=1000)
+    managed = build_managed_groups([slot], _SELF_USE_FILLER)
+
+    await evo_schedule_service.async_write_schedule(inverter, managed, enabled=True)  # type: ignore[arg-type]
+    assert inverter.registers[48018] == 0  # app value 3 written, inverter kept 0
+
+    inverter.writes.clear()
+    await evo_schedule_service.async_write_schedule(inverter, managed, enabled=True)  # type: ignore[arg-type]
+    assert inverter.writes == []  # the cleared flags field doesn't make the slot look changed
 
 
 async def test_write_schedule_skips_unchanged_groups() -> None:

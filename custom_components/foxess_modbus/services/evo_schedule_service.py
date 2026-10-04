@@ -41,6 +41,18 @@ _READ_COUNT = group_address(MANAGED_GROUP_COUNT) - SCHEDULER_ENABLE_ADDRESS
 _FIRST_GROUP_OFFSET = group_address(0) - SCHEDULER_ENABLE_ADDRESS
 # Give the inverter a moment to apply writes before reading back
 _VERIFY_DELAY_SECS = 1.0
+# Group offset +8 (flags): the inverter stores 0 there for a Force Charge slot written over Modbus, whatever
+# was written, and still grid-charges. Write the app's value but don't compare it.
+_FLAGS_OFFSET = 8
+_UNVERIFIED_OFFSETS = frozenset(
+    _FIRST_GROUP_OFFSET + index * GROUP_SIZE + _FLAGS_OFFSET for index in range(MANAGED_GROUP_COUNT)
+)
+
+
+def _comparable(registers: list[int]) -> list[int]:
+    """Group registers without the flags field, for deciding whether a group needs writing."""
+    return [value for offset, value in enumerate(registers) if offset != _FLAGS_OFFSET]
+
 
 _SOC = vol.All(vol.Coerce(int), vol.Range(min=0, max=100))
 
@@ -174,7 +186,7 @@ async def async_write_schedule(
         registers = group.to_registers()
         offset = _FIRST_GROUP_OFFSET + index * GROUP_SIZE
         expected_raw[offset : offset + GROUP_SIZE] = registers
-        if current_groups[index].to_registers() == registers:
+        if _comparable(current_groups[index].to_registers()) == _comparable(registers):
             continue
         address = group_address(index)
         try:
@@ -195,7 +207,7 @@ async def async_write_schedule(
     mismatches = [
         f"{_READ_START + i}: wrote {want}, read {got}"
         for i, (want, got) in enumerate(zip(expected_raw, actual_raw, strict=True))
-        if want != got
+        if want != got and i not in _UNVERIFIED_OFFSETS
     ]
     if mismatches:
         raise HomeAssistantError(f"The inverter didn't keep the schedule that was written ({'; '.join(mismatches)})")
