@@ -1,6 +1,5 @@
 """Defines the services to update charge periods"""
 
-import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import time
@@ -13,11 +12,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
 from ..const import DOMAIN
-from ..entities.modbus_charge_period_sensors import charge_period_start_register_value
 from ..entities.modbus_charge_period_sensors import is_time_value_valid
 from ..entities.modbus_charge_period_sensors import parse_time_value
 from ..entities.modbus_charge_period_sensors import serialize_time_to_value
-from ..client.modbus_client import ModbusClientFailedError
 from ..modbus_controller import ModbusController
 from ..vendor.pymodbus import ModbusIOException
 from .utils import get_controller_from_friendly_name_or_device_id
@@ -143,191 +140,6 @@ class ChargePeriod:
     end: time
 
 
-def _is_illegal_address_error(err: BaseException) -> bool:
-    return "IllegalAddress" in str(err)
-
-
-_EVO_TIME_GROUP_ENABLE = 48000
-
-
-def _without_mode_register(
-    writes: list[tuple[int, int]],
-    mode_address: int | None,
-) -> list[tuple[int, int]]:
-    if mode_address is None:
-        return writes
-    return [(address, value) for address, value in writes if address != mode_address]
-
-
-def _without_address(
-    writes: list[tuple[int, int]],
-    address: int | None,
-) -> list[tuple[int, int]]:
-    if address is None:
-        return writes
-    return [(a, value) for a, value in writes if a != address]
-
-
-def _split_contiguous_writes(writes: list[tuple[int, int]]) -> list[list[tuple[int, int]]]:
-    if not writes:
-        return []
-    sorted_writes = sorted(writes, key=lambda item: item[0])
-    blocks: list[list[tuple[int, int]]] = []
-    current: list[tuple[int, int]] = [sorted_writes[0]]
-    for address, value in sorted_writes[1:]:
-        if address == current[-1][0] + 1:
-            current.append((address, value))
-        else:
-            blocks.append(current)
-            current = [(address, value)]
-    blocks.append(current)
-    return blocks
-
-
-def _build_contiguous_write(writes: list[tuple[int, int]]) -> tuple[int, list[int]]:
-    write_start_address = min(w[0] for w in writes)
-    write_end_address = max(w[0] for w in writes)
-    write_values: list[int | None] = [None] * (write_end_address - write_start_address + 1)
-    for address, value in writes:
-        write_values[address - write_start_address] = value
-    if any(x is None for x in write_values):
-        raise ValueError(f"Incomplete charge-period write block: {writes}")
-    return write_start_address, write_values  # type: ignore[return-value]
-
-
-def _charge_period_diagnostics(
-    controller: ModbusController,
-    addresses: Any,
-) -> str:
-    """Summarise current Modbus reads for charge-period registers."""
-    parts: list[str] = []
-    if addresses.period_start_address in {48011, 48021}:
-        tg = controller.read(_EVO_TIME_GROUP_ENABLE, signed=False)
-        parts.append(f"time_group @{_EVO_TIME_GROUP_ENABLE}={tg if tg is not None else 'unreadable'}")
-    for label, addr in (
-        ("grid", addresses.enable_charge_from_grid_address),
-        ("start", addresses.period_start_address),
-        ("end", addresses.period_end_address),
-        *([("mode", addresses.mode_address)] if addresses.mode_address is not None else []),
-    ):
-        value = controller.read(addr, signed=False)
-        parts.append(f"{label} @{addr}={value if value is not None else 'unreadable'}")
-    return ", ".join(parts)
-
-
-async def _try_enable_evo_time_group(controller: ModbusController) -> bool:
-    """Enable register 48000 when supported. EVO 10-H often has no writable 48000."""
-    if controller.read(_EVO_TIME_GROUP_ENABLE, signed=False) is None:
-        _LOGGER.debug("EVO time-group register %s unreadable; skipping enable", _EVO_TIME_GROUP_ENABLE)
-        return False
-    try:
-        await controller.write_register(_EVO_TIME_GROUP_ENABLE, 1)
-        await asyncio.sleep(0.3)
-        return True
-    except (ModbusIOException, ModbusClientFailedError) as ex:
-        if _is_illegal_address_error(ex):
-            _LOGGER.info(
-                "EVO time-group register %s not writable (%s); using direct 48010 block writes",
-                _EVO_TIME_GROUP_ENABLE,
-                ex,
-            )
-            return False
-        raise
-
-
-async def _write_charge_period_registers(
-    controller: ModbusController,
-    writes: list[tuple[int, int]],
-    *,
-    evo_style: bool,
-    addresses: Any,
-    diagnostics: str,
-) -> None:
-    """Write one charge period using FC16 batches with EVO fallbacks (PR #1134 + 48011-only retry)."""
-
-    async def _try_batches(all_writes: list[tuple[int, int]]) -> None:
-        for block in _split_contiguous_writes(all_writes):
-            start, values = _build_contiguous_write(block)
-            await controller.write_registers(start, values)
-
-    async def _try_sequential(all_writes: list[tuple[int, int]]) -> None:
-        for address, value in sorted(all_writes, key=lambda item: item[0]):
-            await controller.write_register(address, value)
-            await asyncio.sleep(0.1)
-
-    async def _try_write_strategies(all_writes: list[tuple[int, int]]) -> bool:
-        strategies: list[tuple[str, list[tuple[int, int]]]] = [("full block", all_writes)]
-        if evo_style:
-            grid_addr = addresses.enable_charge_from_grid_address
-            no_grid = _without_address(all_writes, grid_addr)
-            if len(no_grid) < len(all_writes):
-                strategies.append(("without grid", no_grid))
-            start_end = [
-                (a, v)
-                for a, v in all_writes
-                if a in (addresses.period_start_address, addresses.period_end_address)
-            ]
-            if start_end:
-                strategies.append(("start/end only", start_end))
-        for name, payload in strategies:
-            try:
-                await _try_batches(payload)
-                return True
-            except (ModbusIOException, ModbusClientFailedError) as ex:
-                if not _is_illegal_address_error(ex):
-                    raise
-                _LOGGER.warning("Charge-period %s batch failed (%s)", name, ex)
-            try:
-                await _try_sequential(payload)
-                return True
-            except (ModbusIOException, ModbusClientFailedError) as ex:
-                if not _is_illegal_address_error(ex):
-                    raise
-                _LOGGER.warning("Charge-period %s sequential failed (%s)", name, ex)
-        return False
-
-    async def _try_evo_times_mode_then_grid(all_writes: list[tuple[int, int]]) -> bool:
-        """Write 48011-48013 first, then 48010 — some EVO firmware rejects grid in the same FC16."""
-        grid_addr = addresses.enable_charge_from_grid_address
-        times_mode = [(a, v) for a, v in all_writes if a != grid_addr]
-        grid = [(a, v) for a, v in all_writes if a == grid_addr]
-        if not times_mode or not grid:
-            return False
-        for name, steps in (
-            ("times+mode then grid (batch)", (_try_batches, _try_batches)),
-            ("times+mode then grid (sequential)", (_try_sequential, _try_sequential)),
-        ):
-            try:
-                await steps[0](times_mode)
-                await steps[1](grid)
-                return True
-            except (ModbusIOException, ModbusClientFailedError) as ex:
-                if not _is_illegal_address_error(ex):
-                    raise
-                _LOGGER.warning("Charge-period %s failed (%s)", name, ex)
-        return False
-
-    if await _try_write_strategies(writes):
-        return
-
-    if evo_style and await _try_evo_times_mode_then_grid(writes):
-        return
-
-    if evo_style and addresses.mode_address is not None:
-        writes_no_mode = _without_mode_register(writes, addresses.mode_address)
-        if len(writes_no_mode) < len(writes) and await _try_write_strategies(writes_no_mode):
-            return
-
-    detail = f" Charge-period reads before write: {diagnostics}."
-    start, values = _build_contiguous_write(writes)
-    raise HomeAssistantError(
-        f"Charge-period write failed at {start} values {values}: IllegalAddress.{detail} "
-        "Charge-period entities are read-only in HA — use foxess_modbus.update_all_charge_periods. "
-        "If IllegalAddress persists, this EVO firmware may not allow Modbus charge-period writes; "
-        "use the Remote Control → Force Charge select instead (requires foxess_modbus update with EVO remote control)."
-    )
-
-
 async def _update_all_charge_periods(
     controllers: list[ModbusController],
     service_data: ServiceCall,
@@ -419,58 +231,42 @@ async def _set_charge_periods(controller: ModbusController, charge_periods: list
     # (One charge period can contain another, or starts/ends can overlap).
     # Mirror this for consistancy, even though it is a little odd.
 
-    evo_style = any(cp.addresses.mode_address is not None for cp in controller.charge_periods)
-    evo_time_group_enabled = False
-    if evo_style and any(p.enable_force_charge for p in charge_periods):
-        evo_time_group_enabled = await _try_enable_evo_time_group(controller)
-
-    # Write each charge period separately (nathanmarlor/foxess_modbus#1134 — EVO 48010–48013 / 48020–48023).
+    # List of (address, value)
+    writes: list[tuple[int, int]] = []
     for charge_period, config in zip(charge_periods, controller.charge_periods, strict=True):
-        diagnostics = _charge_period_diagnostics(controller, config.addresses)
-        writes: list[tuple[int, int]] = [
+        writes.append(
             (
                 config.addresses.period_start_address,
-                charge_period_start_register_value(
-                    charge_period.start,
-                    charge_period.end,
-                    enabled=charge_period.enable_force_charge,
-                ),
-            ),
+                serialize_time_to_value(charge_period.start) if charge_period.enable_force_charge else 0,
+            )
+        )
+        writes.append(
             (
                 config.addresses.period_end_address,
                 serialize_time_to_value(charge_period.end) if charge_period.enable_force_charge else 0,
-            ),
+            )
+        )
+        writes.append(
             (
                 config.addresses.enable_charge_from_grid_address,
                 1 if charge_period.enable_charge_from_grid else 0,
-            ),
-        ]
-        if config.addresses.mode_address is not None:
-            # PR #1134: mode (48013/48023) must be written with the period block. Do not gate
-            # on controller.read() — 48013 is not polled into _data, so read always returns None.
-            mode_value = (
-                config.addresses.mode_charge_value
-                if charge_period.enable_charge_from_grid
-                else config.addresses.mode_no_charge_value
             )
-            writes.append((config.addresses.mode_address, mode_value))
+        )
 
-        try:
-            await _write_charge_period_registers(
-                controller,
-                writes,
-                evo_style=config.addresses.mode_address is not None,
-                addresses=config.addresses,
-                diagnostics=diagnostics,
-            )
-        except ModbusIOException as ex:
-            _LOGGER.warning(ex, exc_info=True)
-            raise HomeAssistantError(str(ex) or "Modbus IO error writing charge period") from ex
-        except ModbusClientFailedError as ex:
-            raise HomeAssistantError(str(ex)) from ex
+    # We expect all of the writes to have a contiguous set of addresses
+    write_values: list[int] = [None] * len(writes)  # type: ignore
+    write_start_address = min(write[0] for write in writes)
 
-    if evo_time_group_enabled and not any(p.enable_force_charge for p in charge_periods):
-        try:
-            await controller.write_register(_EVO_TIME_GROUP_ENABLE, 0)
-        except (ModbusIOException, ModbusClientFailedError) as ex:
-            _LOGGER.warning("Failed to disable EVO time-group register %s: %s", _EVO_TIME_GROUP_ENABLE, ex)
+    for address, value in writes:
+        i = address - write_start_address
+        assert i < len(write_values)
+        assert write_values[i] is None
+        write_values[i] = value
+
+    assert not any(x for x in write_values if x is None)
+
+    try:
+        await controller.write_registers(write_start_address, write_values)
+    except ModbusIOException as ex:
+        _LOGGER.warning(ex, exc_info=True)
+        raise HomeAssistantError() from ex

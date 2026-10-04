@@ -169,3 +169,88 @@ update_all_charge_periods:
           enable_charge_from_grid: false
       selector:
         object:
+get_evo_schedule:
+  name: Get EVO Schedule
+  description: Reads the EVO Mode Scheduler (register 48000 and slots 1-8). See docs/EVO_MODE_SCHEDULER.md.
+  fields:
+    inverter:
+      name: Inverter
+      description: Which inverter to target. Pass a device ID or unique friendly name.
+      required: true
+      default: "''"
+      example: "''"
+      selector:
+        device:
+          integration: foxess_modbus
+set_evo_schedule:
+  name: Set EVO Schedule
+  description: >
+    Replaces the EVO Mode Scheduler. Slots are written in order (earlier slots win where they overlap), followed
+    by an all-day "remaining" slot, exactly as the Fox app does. Each slot is written as one complete block and
+    read back to confirm. Editing the schedule in the Fox app afterwards will overwrite it.
+  fields:
+    inverter:
+      name: Inverter
+      description: Which inverter to target. Pass a device ID or unique friendly name.
+      required: true
+      default: "''"
+      example: "''"
+      selector:
+        device:
+          integration: foxess_modbus
+    enabled:
+      name: Enable scheduler
+      description: Turn the Mode Scheduler on (register 48000). If off, the slots are stored but the inverter follows its Work Mode.
+      required: false
+      default: true
+      selector:
+        boolean:
+    slots:
+      name: Slots
+      description: >
+        Up to 7 slots. work_mode is one of self_use, feed_in, back_up, force_charge, force_discharge. min_soc/max_soc
+        apply to self_use, feed_in and back_up; fd_soc (cut-off SoC) and fd_pwr (watts) apply to force_charge and
+        force_discharge.
+      required: false
+      example: >
+        - start: "01:00"
+          end: "04:30"
+          work_mode: force_charge
+          fd_soc: 95
+          fd_pwr: 6000
+        - start: "16:00"
+          end: "19:00"
+          work_mode: feed_in
+          min_soc: 20
+          max_soc: 100
+      selector:
+        object:
+    remaining:
+      name: Remaining time slots
+      description: Work mode and SoC limits for times not covered by a slot (work_mode is self_use, feed_in or back_up).
+      required: false
+      example: >
+        work_mode: self_use
+        min_soc: 10
+        max_soc: 100
+      selector:
+        object:
+set_evo_schedule_enabled:
+  name: Set EVO Scheduler Enabled
+  description: Turns the EVO Mode Scheduler (register 48000) on or off without changing the slots.
+  fields:
+    inverter:
+      name: Inverter
+      description: Which inverter to target. Pass a device ID or unique friendly name.
+      required: true
+      default: "''"
+      example: "''"
+      selector:
+        device:
+          integration: foxess_modbus
+    enabled:
+      name: Enabled
+      description: Turn the Mode Scheduler on or off.
+      required: true
+      selector:
+        boolean:

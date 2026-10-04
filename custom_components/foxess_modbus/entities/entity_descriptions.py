@@ -3117,6 +3117,13 @@ def _configuration_entities() -> Iterable[EntityFactory]:
         },
         include_remote_control_modes=False,
     )
+    # While the Mode Scheduler is on, its slots override Work Mode (49203). See docs/EVO_MODE_SCHEDULER.md
+    yield ModbusBinarySensorDescription(
+        key="mode_scheduler",
+        address=[ModbusAddressSpec(holding=48000, models=Inv.EVO)],
+        name="Mode Scheduler",
+        icon_func=lambda on: "mdi:calendar-clock" if on else "mdi:calendar-remove",
+    )
 
     yield ModbusWorkModeSelectDescription(
         key="work_mode",
