@@ -148,6 +148,12 @@ Registers read back:
 
 A schedule set from the Fox app / cloud did not stop Modbus writes in any of these tests.
 
+**Modbus changes only partly reach the cloud.** After writing slots over Modbus, Fox Cloud's
+`scheduler/get` (and so the Fox app) showed the new slot values within a couple of minutes. But after
+switching the scheduler off over Modbus (`48000 = 0`, confirmed by reading the register), the cloud and the
+Fox app still showed Mode Scheduler as on more than 10 minutes later. Treat the registers as the truth, and
+be aware that saving in the Fox app while it shows a stale state may write that state back to the inverter.
+
 Recommendations for integrations:
 
 1. Read the group table, change what you need, then write **each changed group as one 10-register
