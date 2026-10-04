@@ -140,6 +140,8 @@ class ModbusController(EntityController, UnloadController):
         self._current_connection_error: str | None = None
         # Any ranges of registers which we've detected that we can't read
         self._detected_invalid_ranges = InvalidRegisterRanges()
+        # ON_CONNECTION registers which were registered after the initial connection poll, and so still need reading
+        self._pending_on_connection_addresses: set[int] = set()
 
         self._inverter_capacity = connection_type_profile.inverter_model_profile.inverter_capacity(
             self.inverter_details[INVERTER_MODEL]
@@ -308,6 +310,7 @@ class ModbusController(EntityController, UnloadController):
                         if register_value is not None:
                             register_value.read_value = value
                             changed_addresses.add(address)
+                        self._pending_on_connection_addresses.discard(address)
 
                 _LOGGER.debug(
                     "Refresh of %s %s complete - notifying sensors: %s",
@@ -444,7 +447,11 @@ class ModbusController(EntityController, UnloadController):
         read_size = 0
         # TODO: Do we want to cache the result of this?
         for address, register_value in sorted(self._data.items()):
-            if register_value.poll_type == RegisterPollType.ON_CONNECTION and not is_initial_connection:
+            if (
+                register_value.poll_type == RegisterPollType.ON_CONNECTION
+                and not is_initial_connection
+                and address not in self._pending_on_connection_addresses
+            ):
                 continue
 
             # Have we found that we can't read this register? Don't try again.
@@ -564,6 +571,9 @@ class ModbusController(EntityController, UnloadController):
             )
             if address not in self._data:
                 self._data[address] = RegisterValue(poll_type=listener.register_poll_type)
+                # If we've already done the initial connection poll, make sure this still gets read once
+                if listener.register_poll_type == RegisterPollType.ON_CONNECTION:
+                    self._pending_on_connection_addresses.add(address)
             else:
                 # We could handle this (removing gets harder), but it shouldn't happen in practice anyway
                 assert self._data[address].poll_type == listener.register_poll_type
@@ -575,6 +585,7 @@ class ModbusController(EntityController, UnloadController):
         for address in listener.addresses:
             if address not in other_addresses and address in self._data:
                 del self._data[address]
+                self._pending_on_connection_addresses.discard(address)
 
     def _notify_update(self, changed_addresses: set[int]) -> None:
         """Notify listeners"""
