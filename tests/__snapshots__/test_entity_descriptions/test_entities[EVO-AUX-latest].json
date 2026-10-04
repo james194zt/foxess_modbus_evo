@@ -1049,6 +1049,15 @@
   },
   {
     "addresses": [
+      46620
+    ],
+    "key": "max_soc_from_grid",
+    "name": "Max SoC From Grid",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
       46609
     ],
     "key": "min_soc",

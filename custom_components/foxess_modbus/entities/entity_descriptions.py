@@ -3288,6 +3288,21 @@ def _configuration_entities() -> Iterable[EntityFactory]:
         icon="mdi:battery-arrow-up",
         validate=[Range(0, 100)],
     )
+    # Undocumented on EVO (found by testing): Max SoC (46610) can't be set below this. To lower Max SoC,
+    # lower this first; to raise it, raise Max SoC first. See docs/evo/work-mode-soc-remote-control.md
+    yield ModbusNumberDescription(
+        key="max_soc_from_grid",
+        addresses=[ModbusAddressSpec(holding=46620, models=Inv.EVO)],
+        name="Max SoC From Grid",
+        mode=NumberMode.BOX,
+        native_min_value=10,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement="%",
+        device_class=NumberDeviceClass.BATTERY,
+        icon="mdi:transmission-tower-import",
+        validate=[Range(0, 100)],
+    )
 
     # Sensor kept for back compat
     yield ModbusSensorDescription(
