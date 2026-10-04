@@ -25,6 +25,9 @@ something is inferred rather than confirmed, it is marked **unverified**.
   [Write behaviour](#write-behaviour)).
 - While `48000 = 1`, the work-mode register `49203` is overridden by the schedule. Writing `49203` alone
   will appear to "not work".
+- System Max SoC (`46610`) is writable, but can't go below Max SoC From Grid (`46620`) — see
+  [SoC limits](#soc-limits-scheduler-off).
+- The Fox app / cloud doesn't reliably show changes made over Modbus; read the registers instead.
 
 ## Register map
 
@@ -53,14 +56,16 @@ inverter; the app itself manages groups **1–8** (see [App behaviour](#app-beha
 | +5 | Cut-off SoC (`fdSoc`) | percent. Force charge: stop charging at this SoC. Force discharge: stop discharging at this SoC. |
 | +6 | Force charge / discharge power (`fdPwr`) | watts |
 | +7 | Unknown | `0` in every capture (**unverified**; possibly the "after cut-off" mode, with Self-Use = 0) |
-| +8 | Flags | **unverified** — see below |
+| +8 | Flags | meaning **unverified** — don't depend on it, see below |
 | +9 | Slot marker | `1` on groups 1–8, `0` on groups 9+ in every capture (**unverified** meaning) |
 
-**+8 flags (unverified):** observed values were `3` for Force Charge and Force Discharge, `1` for Feed-in
-and `0` for Self-Use. For those Force Charge / Force Discharge slots the app showed "Charge from grid:
-Enabled" and "Charge / Discharge from PV: Enabled", which fits bit 0 = PV and bit 1 = grid, but this has
-not been tested bit by bit. The value is **not** recalculated when the app changes a slot's mode (a slot
-changed from Force Discharge to Back-up kept `3`).
+**+8 flags:** in app-written slots the values were `3` for Force Charge and Force Discharge, `1` for
+Feed-in and `0` for Self-Use, and the app showed "Charge from grid: Enabled" and "Charge / Discharge from
+PV: Enabled" for the force slots (which would fit bit 0 = PV, bit 1 = grid). The value is **not**
+recalculated when the app changes a slot's mode (Force Discharge → Back-up kept `3`). However, when a Force
+Charge slot is written **over Modbus**, the inverter stores `0` here even if `3` is written, and the slot
+still charges from the grid (see [Behaviour of a Force Charge slot](#behaviour-of-a-force-charge-slot)). A
+Feed-in slot written with `1` kept `1`. Integrations should write the app's values but not verify this field.
 
 ### Work-mode codes
 
@@ -125,8 +130,8 @@ Registers read back:
 ## App behaviour
 
 - **"Remaining Time Slots" is a real group.** The app writes it as an enabled 00:00–23:59 group after the
-  user's slots. With overlapping groups the earlier slot takes priority (inferred from the app always
-  placing the filler last; **unverified** on the inverter itself).
+  user's slots. With overlapping groups the earlier slot takes priority (confirmed: a Force Charge slot
+  placed before the all-day filler ran during its window).
 - **Choosing a plain work mode** (e.g. Self-Use, Back-up) in the app sets `49203` to that mode and
   `48000 = 0`. The groups are left untouched.
 - **Choosing Mode Scheduler** sets `48000 = 1` and leaves `49203` at whatever it was.
@@ -184,14 +189,40 @@ placed before the all-day Self-Use filler:
 `IllegalValue` (not `IllegalAddress`): System Max can't be set below Max SoC From Grid. Lower `46620` first,
 then `46610`; to raise, write `46610` first, then `46620`. Single-register writes were accepted for both.
 
-Recommendations for integrations:
+While the Mode Scheduler is on, the inverter takes SoC limits from the active slot (+4), so changing the
+global `46609`–`46611` then has no visible effect. That is a likely source of reports that EVO max SoC "can't
+be changed".
+
+## Remote Control (46001 …) alongside the scheduler
+
+- A Remote Control Force Charge / Force Discharge **overrides** the active slot straight away, and the slot
+  resumes when Remote Control is disabled.
+- Its power comes from the Remote Control power setting, not from the slot's `fdPwr`.
+- foxess_modbus's remote-control manager writes a "fallback" work mode to `49203` while active (Force
+  Discharge → Feed-in First, Force Charge → Back-up) so the inverter does something sensible if Home
+  Assistant disconnects. Upstream does not restore the previous work mode when Remote Control is disabled,
+  so `49203` is left changed afterwards.
+
+## Fox Cloud Open API notes (EVO)
+
+| Call | Result on the EVO 10-5-H |
+|---|---|
+| `POST /op/v3/device/scheduler/get` with `{"deviceSN": …}` | Works; returns the groups shown above, but may be stale |
+| `POST /op/v1/device/scheduler/get/flag` with `{"deviceSN": …}` | Works; `enable` does not track `48000` |
+| `POST /op/v0/device/batteryHeating/get` with `{"sn": …}` | Works (warm-up enable, start/stop temperatures, 3 time windows) |
+| `POST /op/v0/device/batteryHeating/get` with `{"deviceSN": …}` | errno 40257 ("Parameters do not meet expectations") |
+| `POST /op/v0/device/setting/get` with `WorkMode` | errno 42015 (not supported on this device) |
+
+## Recommendations for integrations
 
 1. Read the group table, change what you need, then write **each changed group as one 10-register
    block**. Never write a partial group.
 2. Set every field explicitly. Leftover values from earlier app edits are common.
-3. Write the groups first, then the `48000`–`48009` block.
-4. Read back and compare. Fail loudly on mismatch instead of trying alternative write patterns.
-5. While `48000 = 1`, change behaviour through the groups, not `49203`.
+3. Write the groups first, then the `48000`–`48009` block (as one block, never `48000` alone).
+4. Read back and compare (except +8). Fail loudly on mismatch instead of trying alternative write patterns.
+5. While `48000 = 1`, change behaviour through the groups, not `49203` or the global SoC registers.
+6. Use the registers as the source of truth, never the Fox Cloud / app view.
+7. To cap a grid charge, use the slot's cut-off SoC (+5); the battery then holds until the slot ends.
 
 ## Relation to earlier work
 
@@ -202,5 +233,8 @@ Recommendations for integrations:
   (6 = Force Charge, 1 = Self Use). Only 4 of the 10 registers were written, so whether it worked depended
   on what the app had previously left in the other 6.
 - **#1245** described the same 10-register layout for the H3 Smart / H3 Pro from the FoxESS protocol
-  document (Table 3-11) and treated +7 and +8 as reserved. On the EVO, +8 carries non-zero values set by
-  the app, so writing `0` there is likely not equivalent to what the app does.
+  document (Table 3-11) and treated +7 and +8 as reserved. On the EVO the app writes non-zero values to
+  +8, but the inverter stores `0` there for Force Charge slots written over Modbus and still grid-charges,
+  so writing `0` appears harmless for Force Charge.
+- **#1248** found System Max SoC (`46610`) rejecting 99 with exception 3 and suspected a dependency on
+  Max SoC From Grid. Confirmed here: `46610` must be ≥ `46620`.
