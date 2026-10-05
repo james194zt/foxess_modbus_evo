@@ -36,6 +36,9 @@ When an action fails with "Unknown error", the real reason is in **Settings → 
 (The first number in `Exception Response(134, 6, …)` is the function code + 128: 134 = write single
 register, 144 = write multiple registers.)
 
+If your adapter is Modbus TCP, a small script that talks to it directly (alongside Home Assistant) shows
+the exception code straight away. Keep each connection short, and match replies by transaction ID.
+
 ## Safety rules
 
 1. **Read before you write**, and note the original values so you can restore them.
@@ -62,6 +65,8 @@ register, 144 = write multiple registers.)
   names, serials and some versions are text, 2 characters per register).
 - Take a full snapshot of the readable registers, change something, take another, and compare the two to
   find what moved.
+- Don't stop at `49999`. Battery warm-up turned out to be at `53400`, above every documented range. Holding
+  registers `50000`–`65535` are mostly unreadable on the EVO, so this sweep is quick.
 
 ## Value encodings seen on the EVO
 

@@ -32,6 +32,8 @@ Other EVO models and firmware may differ. Please share results from yours (see
   how to write it safely, how a Force Charge slot behaves, and how the app uses the table.
 - **[Work mode, SoC limits and Remote Control](work-mode-soc-remote-control.md)** — `49203`, `46609`–`46620`
   (including the undocumented Max SoC From Grid rule), and Remote Control alongside the scheduler.
+- **[Battery warm-up](battery-warm-up.md)** — the undocumented warm-up settings at `53400`: readable over
+  Modbus, but writes are refused.
 - **[Identity and version registers](identity-and-versions.md)** — model, serials, firmware, BCU version,
   and why "BMS pack version" sensors show nonsense on the EVO.
 - **[Fox Cloud API](fox-cloud-api.md)** — which Open API calls work on the EVO, and why the cloud can't be

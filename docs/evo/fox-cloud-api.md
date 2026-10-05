@@ -40,3 +40,6 @@ cells between −20 °C and 0 °C up to 5 °C, and outside three configurable "f
 surplus PV only. Full heating is off by default. `batteryHeating/get` returns these settings
 (`batteryWarmUpEnable`, `startTemperature`, `endTemperature`, `time1Enable` … `time3EndMinute`, and a state
 string). ❓ `batteryHeating/set` has not been tested.
+
+The same settings can be read over Modbus at `53400`–`53414`, but not written there — so the cloud (or the
+app) is the only way to change them. See [Battery warm-up](battery-warm-up.md).

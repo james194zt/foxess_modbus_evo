@@ -186,6 +186,64 @@
   },
   {
     "addresses": [
+      53400
+    ],
+    "key": "battery_warm_up",
+    "name": "Battery Warm-up",
+    "type": "binary-sensor"
+  },
+  {
+    "addresses": [
+      53402
+    ],
+    "key": "battery_warm_up_end_temperature",
+    "name": "Battery Warm-up End Temperature",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      53403,
+      53404,
+      53405
+    ],
+    "key": "battery_warm_up_period_1",
+    "name": "Battery Warm-up Period 1",
+    "type": "time_period_sensor"
+  },
+  {
+    "addresses": [
+      53406,
+      53407,
+      53408
+    ],
+    "key": "battery_warm_up_period_2",
+    "name": "Battery Warm-up Period 2",
+    "type": "time_period_sensor"
+  },
+  {
+    "addresses": [
+      53409,
+      53410,
+      53411
+    ],
+    "key": "battery_warm_up_period_3",
+    "name": "Battery Warm-up Period 3",
+    "type": "time_period_sensor"
+  },
+  {
+    "addresses": [
+      53401
+    ],
+    "key": "battery_warm_up_start_temperature",
+    "name": "Battery Warm-up Start Temperature",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       37609
     ],
     "key": "batvolt_1",
