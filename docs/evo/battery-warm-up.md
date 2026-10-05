@@ -51,6 +51,19 @@ be seen:
 Through `foxess_modbus.write_registers`, which doesn't show the code: FC6 `53400` and `53401`, and FC16
 `53400` × 3, × 10, × 12, × 15, × 20, × 28 and `53403` × 3 were all refused.
 
+A full sweep then tried **every** shape inside the block: a single-register write (FC6) to each of `53400`–`53427`,
+and a multi-register write (FC16) from every start address with every length that fits (434 writes, all
+writing back the current values). All 434 were refused with exception 2.
+
+Not a permission problem as far as we can tell: the protocol document has a "No permission" exception (`0x80`)
+for writes that need authentication, and that's not what comes back. Its only password register (`49232`–`49239`,
+"Key Password") reads all zeros and sits next to the network-status register (`49240`), so it looks like a network
+key rather than a Modbus log-in; we didn't write to it.
+
+The inverter's own data logger (the built-in Wi-Fi module that links it to the Fox Cloud) does change these
+settings, possibly over Modbus on its own internal port. Its traffic can't be watched without opening the
+inverter, so how it writes is unknown.
+
 The same writes were refused in the same way with warm-up switched **off** in the app, so it isn't the
 feature being active that locks the registers. Unlike the Mode Scheduler, where the *shape* of a write
 matters, no shape was accepted here.
