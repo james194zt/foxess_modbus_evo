@@ -50,13 +50,20 @@ Other EVO models and firmware may differ. Please share results from yours (see
    active slot decides. This is the usual cause of "my work mode won't change".
 3. **`49203` is written with the same 1-based codes it reads** (1 Self Use, 2 Feed-in, 3 Back-up). Writing
    0-based values sets the wrong mode.
-4. **System Max SoC can't go below Max SoC From Grid** (`46620`, undocumented). Lower `46620` first.
+4. **System Max SoC can't go below Max SoC From Grid** (`46620`, undocumented), **or below the current battery
+   level**. Lower `46620` first.
 5. **The Fox app and cloud lag behind or miss Modbus changes** — especially the Mode Scheduler switch. Read
    the registers; and saving in the app may write its stale view back.
 6. **A Force Charge slot honours its power and cut-off SoC, then holds the battery** until the slot ends.
 
 ## Using this with Home Assistant
 
-This repository's foxess_modbus fork implements the findings: `foxess_modbus.get_evo_schedule`,
-`set_evo_schedule` and `set_evo_schedule_enabled` read and write the Mode Scheduler as whole blocks with
-read-back verification, and a "Mode Scheduler" binary sensor shows whether the schedule is in control.
+This repository's foxess_modbus fork implements the findings:
+
+- `foxess_modbus.get_evo_schedule`, `set_evo_schedule` and `set_evo_schedule_enabled` read and write the Mode
+  Scheduler as whole blocks (all eight app-managed slots in one write) with read-back verification.
+- A **Mode Scheduler** binary sensor shows whether the schedule is in control.
+- A **Max SoC From Grid** number (`46620`).
+- Work mode (`49203`) written with the correct 1-based codes; Remote Control puts the previous work mode back
+  when it's disabled.
+- Read-only **Battery Warm-up** entities (on/off, start/end temperature, periods 1–3).
