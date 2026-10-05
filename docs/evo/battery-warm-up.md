@@ -8,6 +8,14 @@ the Fox Cloud API (`batteryHeating/set`, see [Fox Cloud API](fox-cloud-api.md)).
 What warm-up does is described in the EVO user manual (§2.6): it is only available on heated battery
 versions, and outside the "full power" periods it heats using surplus PV only.
 
+The Fox app's Battery warm-up tab adds a note about low SoC:
+
+> As the battery SOC is <40% only PV and grid energy (if enabled) will be used. Battery energy will not be
+> used for self-warming.
+
+So below 40% SoC the battery doesn't use its own energy to warm itself up. Only PV, or grid power if
+enabled, is used.
+
 ## Layout
 
 | Register | Field | Encoding | Example |
