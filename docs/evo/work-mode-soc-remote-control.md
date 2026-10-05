@@ -80,5 +80,6 @@ Discharge Power settings.
   fallback work mode to `49203` (Force Discharge → Feed-in First, Force Charge → Back-up) so the inverter
   does something sensible if Home Assistant disconnects. Upstream doesn't restore the previous work mode when
   Remote Control is disabled; this fork does (tested: Self Use → Back-up during Force Charge → Self Use).
-- ❓ With Force Charge Power set to 1 kW, a night-time Force Charge was seen charging the battery at about
-  3.7 kW. Not yet investigated.
+- ✅ In foxess_modbus, **Force Charge Power limits grid import, not the battery's charge rate**. With solar
+  available, the battery charges at that import plus whatever PV adds: set to 1 kW in the morning, the battery
+  charged at about 3.7 kW (1 kW from the grid plus solar).
