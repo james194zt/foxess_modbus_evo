@@ -10,6 +10,9 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import Platform
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.restore_state import ExtraStoredData
+from homeassistant.helpers.restore_state import RestoredExtraData
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..common.entity_controller import EntityController
 from ..common.types import Inv
@@ -20,7 +23,6 @@ from .entity_factory import EntityFactory
 from .inverter_model_spec import ModbusAddressesSpec
 from .modbus_entity_mixin import ModbusEntityMixin
 from .modbus_fault_sensor import FaultSet
-
 
 # FoxESS Modbus Protocol v1.05.03.00 section 4.1 — alarm bitfields at holding 39067–39069.
 FOXESS_INVERTER_ALARMS = FaultSet(
@@ -91,9 +93,7 @@ class AlarmSensorMode(Enum):
     LAST_EVENT = "last_event"
 
 
-def decode_active_alarms(
-    controller: EntityController, addresses: list[int], alarm_set: FaultSet
-) -> set[str] | None:
+def decode_active_alarms(controller: EntityController, addresses: list[int], alarm_set: FaultSet) -> set[str] | None:
     """Return the set of active alarm names, or None if any register read failed."""
 
     active: set[str] = set()
@@ -166,8 +166,12 @@ class ModbusAlarmSensorDescription(SensorEntityDescription, EntityFactory):  # t
         }
 
 
-class ModbusAlarmSensor(ModbusEntityMixin, SensorEntity):
-    """Sensor for FoxESS inverter alarm bitfields."""
+class ModbusAlarmSensor(ModbusEntityMixin, RestoreEntity, SensorEntity):
+    """Sensor for FoxESS inverter alarm bitfields.
+
+    The last event and the alarms active at shutdown are restored after a restart, so an alarm that's still
+    active isn't announced again and one that cleared while Home Assistant was down is reported as cleared.
+    """
 
     def __init__(
         self,
@@ -183,10 +187,25 @@ class ModbusAlarmSensor(ModbusEntityMixin, SensorEntity):
         self.entity_id = self._get_entity_id(Platform.SENSOR)
         self._previous_active: set[str] = set()
         self._last_event = "None"
+        self._published = False
 
     @property
     def addresses(self) -> list[int]:
         return self._addresses
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        extra_data = await self.async_get_last_extra_data()
+        if extra_data:
+            restored = extra_data.as_dict()
+            self._last_event = str(restored.get("last_event") or "None")
+            self._previous_active = set(restored.get("previous_active") or [])
+
+    @property
+    def extra_restore_state_data(self) -> ExtraStoredData:
+        return RestoredExtraData(
+            json_dict={"last_event": self._last_event, "previous_active": sorted(self._previous_active)}
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -236,9 +255,11 @@ class ModbusAlarmSensor(ModbusEntityMixin, SensorEntity):
                 },
             )
 
-        if entity_description.mode == AlarmSensorMode.LAST_EVENT and not (raised or cleared):
+        # Last Event only changes on an event, but publish once at start so it doesn't sit at "unknown"
+        if entity_description.mode == AlarmSensorMode.LAST_EVENT and not (raised or cleared) and self._published:
             return
 
+        self._published = True
         self.schedule_update_ha_state()
 
     def _log_alarm_changes(self, raised: set[str], cleared: set[str], active: set[str]) -> None:

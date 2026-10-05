@@ -52,16 +52,46 @@ def test_alarm_sensor_records_last_event_only_on_change() -> None:
     sensor.entity_id = "sensor.inverter_alarm_last"
     sensor.schedule_update_ha_state = MagicMock()
 
+    # Published once at start so it doesn't sit at "unknown", then only on a change
     sensor._address_updated()
     assert sensor.native_value == "None"
-    assert sensor.schedule_update_ha_state.call_count == 0
+    assert sensor.schedule_update_ha_state.call_count == 1
+    sensor._address_updated()
+    assert sensor.schedule_update_ha_state.call_count == 1
 
     poll["n"] = 1
     sensor._address_updated()
     assert sensor.native_value == "Raised: Meter lost"
-    assert sensor.schedule_update_ha_state.call_count == 1
+    assert sensor.schedule_update_ha_state.call_count == 2
     controller.hass.bus.fire.assert_called_once()
 
     sensor._address_updated()
     assert sensor.native_value == "Raised: Meter lost"
-    assert sensor.schedule_update_ha_state.call_count == 1
+    assert sensor.schedule_update_ha_state.call_count == 2
+
+
+def test_alarm_sensor_state_survives_a_restart() -> None:
+    controller = MagicMock()
+    controller.read.side_effect = lambda address, signed=False: 0x0200 if address == 39069 else 0  # meter lost
+    description = ModbusAlarmSensorDescription(
+        key="inverter_alarm_last",
+        addresses=[],
+        alarm_set=FOXESS_INVERTER_ALARMS,
+        mode=AlarmSensorMode.LAST_EVENT,
+        name="Inverter Alarm Last Event",
+    )
+    before = ModbusAlarmSensor(controller, description, [39067, 39068, 39069])
+    before.entity_id = "sensor.inverter_alarm_last"
+    before.schedule_update_ha_state = MagicMock()
+    before._address_updated()
+    saved = before.extra_restore_state_data.as_dict()
+    assert saved == {"last_event": "Raised: Meter lost", "previous_active": ["Meter lost"]}
+
+    # After the restart the still-active alarm isn't announced again
+    after = ModbusAlarmSensor(controller, description, [39067, 39068, 39069])
+    after.entity_id = "sensor.inverter_alarm_last"
+    after.schedule_update_ha_state = MagicMock()
+    after._last_event, after._previous_active = saved["last_event"], set(saved["previous_active"])
+    after._address_updated()
+    assert after.native_value == "Raised: Meter lost"
+    controller.hass.bus.fire.assert_called_once()  # only the original raise, from `before`

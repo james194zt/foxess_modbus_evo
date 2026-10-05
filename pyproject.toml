@@ -44,5 +44,7 @@ extend-exclude = [
 force-single-line = true
 
 [tool.pytest.ini_options]
+# Only collect tests/: research/ holds scripts that talk to a real inverter
+testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
