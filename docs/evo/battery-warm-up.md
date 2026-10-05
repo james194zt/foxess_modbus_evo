@@ -43,7 +43,12 @@ be seen:
 Through `foxess_modbus.write_registers`, which doesn't show the code: FC6 `53400` and `53401`, and FC16
 `53400` × 3, × 10, × 12, × 15, × 20, × 28 and `53403` × 3 were all refused.
 
-Unlike the Mode Scheduler, where the *shape* of a write matters, no shape was accepted here.
+The same writes were refused in the same way with warm-up switched **off** in the app, so it isn't the
+feature being active that locks the registers. Unlike the Mode Scheduler, where the *shape* of a write
+matters, no shape was accepted here.
+
+Changes made in the app reached these registers within a couple of minutes. Turning warm-up off cleared
+`53400` and each period's enable flag but left the period times in place.
 
 ## How it was found
 
