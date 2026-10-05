@@ -606,6 +606,26 @@
   },
   {
     "addresses": [
+      46612
+    ],
+    "key": "eps_frequency_setting",
+    "name": "EPS Frequency Setting",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46613
+    ],
+    "key": "eps_output_mode",
+    "name": "EPS Output Mode",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39213,
       39212
     ],
@@ -816,6 +836,17 @@
     ],
     "key": "installer_export_power_limit",
     "name": "Export Power Limit (Installer)",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46502,
+      46501
+    ],
+    "key": "installer_import_power_limit",
+    "name": "Import Power Limit (Installer)",
     "scale": 0.001,
     "signed": true,
     "type": "sensor"
@@ -1200,6 +1231,36 @@
   },
   {
     "addresses": [
+      49207
+    ],
+    "key": "meter1_type",
+    "name": "Meter 1 / CT 1",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      49208
+    ],
+    "key": "meter2_type",
+    "name": "Meter 2 / CT 2",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      49248
+    ],
+    "key": "meter_compensation",
+    "name": "Meter Compensation",
+    "scale": null,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       46609
     ],
     "key": "min_soc",
@@ -1255,6 +1316,16 @@
   },
   {
     "addresses": [
+      49210
+    ],
+    "key": "mppt_scan",
+    "name": "MPPT Scan",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39002,
       39003,
       39004,
@@ -1300,6 +1371,27 @@
     "name": "PCS Serial Number",
     "register_count": 16,
     "type": "string_sensor"
+  },
+  {
+    "addresses": [
+      46505,
+      46504
+    ],
+    "key": "peak_shaving_export_limit",
+    "name": "Peak Shaving Export Limit",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46503
+    ],
+    "key": "peak_shaving_threshold_soc",
+    "name": "Peak Shaving Threshold SoC",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
   },
   {
     "addresses": [

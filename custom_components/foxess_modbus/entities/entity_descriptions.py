@@ -255,14 +255,48 @@ def _installer_setting_entities() -> Iterable[EntityFactory]:
             icon="mdi:current-ac",
             validate=[Range(0, 1000)],
         )
-    # Number from the protocol's grid standard table (e.g. 2 G98_UK, 3 G99_UK)
+    yield _kw("installer_import_power_limit", [46502, 46501], "Import Power Limit (Installer)")
+    # Peak shaving (work mode 4): 46500 itself refuses reads on the EVO; 46501–46514 read fine
+    yield _kw("peak_shaving_export_limit", [46505, 46504], "Peak Shaving Export Limit")
     yield ModbusSensorDescription(
-        key="grid_standard_code",
-        addresses=[ModbusAddressesSpec(holding=[49079], models=Inv.EVO)],
-        name="Grid Standard Code",
+        key="peak_shaving_threshold_soc",
+        addresses=[ModbusAddressesSpec(holding=[46503], models=Inv.EVO)],
+        name="Peak Shaving Threshold SoC",
+        native_unit_of_measurement="%",
         signed=False,
-        icon="mdi:certificate-outline",
+        icon="mdi:battery-arrow-down-outline",
+        validate=[Range(0, 100)],
     )
+    yield ModbusSensorDescription(
+        key="meter_compensation",
+        addresses=[ModbusAddressesSpec(holding=[49248], models=Inv.EVO)],
+        name="Meter Compensation",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement="W",
+        icon="mdi:meter-electric-outline",
+        validate=[Range(-500, 500)],
+    )
+    # Coded settings; the numbers are listed in the protocol (and in docs/evo/installer-settings.md)
+    for key, holding, name, icon in (
+        # Number from the protocol's grid standard table (e.g. 2 G98_UK, 3 G99_UK)
+        ("grid_standard_code", 49079, "Grid Standard Code", "mdi:certificate-outline"),
+        # 0 invalid, 1 50 Hz, 2 60 Hz
+        ("eps_frequency_setting", 46612, "EPS Frequency Setting", "mdi:sine-wave"),
+        # 0 disable, 2 EPS mode, 3 UPS mode
+        ("eps_output_mode", 46613, "EPS Output Mode", "mdi:power-plug-battery-outline"),
+        # 0 off, 1 single-phase meter, 2 CT, 3 three-phase meter
+        ("meter1_type", 49207, "Meter 1 / CT 1", "mdi:meter-electric"),
+        ("meter2_type", 49208, "Meter 2 / CT 2", "mdi:meter-electric"),
+        # 0 disable, 1 enable
+        ("mppt_scan", 49210, "MPPT Scan", "mdi:solar-panel"),
+    ):
+        yield ModbusSensorDescription(
+            key=key,
+            addresses=[ModbusAddressesSpec(holding=[holding], models=Inv.EVO)],
+            name=name,
+            signed=False,
+            icon=icon,
+        )
 
 
 def _pv_entities() -> Iterable[EntityFactory]:
