@@ -8,3 +8,4 @@ config/*
 fox_scheduler_*.json
 # Raw register snapshots (contain inverter and battery serials)
 research/
+.venv-ha2025.8/
