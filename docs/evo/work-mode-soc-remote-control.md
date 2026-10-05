@@ -52,6 +52,15 @@ concluded.
 
 Both were accepted as single-register (FC6) writes.
 
+✅ **System Max SoC (`46610`) also can't be set below the current battery level.** With the battery at 26 %,
+writing `15` to `46610` failed with `IllegalValue`, while writing `15` to `46620` was accepted. So when lowering
+Max SoC, check the battery level first, or put `46620` back if the `46610` write is refused, otherwise grid
+charging is left capped at the lower value.
+
+✅ SoC limit writes are accepted **while Remote Control is active**, and Remote Control keeps running: with a
+Remote Control Force Charge in progress, writing `46609`, `46611` and `46610` (unchanged values) was accepted
+and the charge carried on. There's no need to switch Remote Control off first.
+
 ✅ While the Mode Scheduler is on, the active slot's own SoC limits (+4) apply, so changing `46609`–`46611`
 has no visible effect until the scheduler is switched off.
 
@@ -65,8 +74,11 @@ Discharge Power settings.
   disabling Remote Control lets the slot resume.
 - ✅ Its power comes from the Remote Control power setting (the inverter's full rating by default — 3.88 kW was
   observed on an EVO 10), not from the slot's `fdPwr`.
-- ✅ While active, `49203` reads `255`.
+- ✅ While active, `49203` has been seen reading `255` in one test, and `3` (Back-up, the integration's fallback
+  below) in another (Force Charge at night). Don't rely on either value to detect Remote Control.
 - ✅ **foxess_modbus behaviour to be aware of:** while Remote Control is active, the integration writes a
   fallback work mode to `49203` (Force Discharge → Feed-in First, Force Charge → Back-up) so the inverter
-  does something sensible if Home Assistant disconnects. It does not restore the previous work mode when
-  Remote Control is disabled, so `49203` is left changed afterwards.
+  does something sensible if Home Assistant disconnects. Upstream doesn't restore the previous work mode when
+  Remote Control is disabled; this fork does (tested: Self Use → Back-up during Force Charge → Self Use).
+- ❓ With Force Charge Power set to 1 kW, a night-time Force Charge was seen charging the battery at about
+  3.7 kW. Not yet investigated.
