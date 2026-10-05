@@ -130,6 +130,21 @@ SoC) placed before the all-day Self-Use slot, at night:
 - ✅ **Remote Control** Force Discharge overrode the running slot immediately; disabling Remote Control let
   the slot resume. See [work mode, SoC limits and Remote Control](work-mode-soc-remote-control.md).
 
+## Behaviour of a Force Discharge slot
+
+Tested in daylight with the scheduler on and a Force Discharge slot (`fdPwr` 1000 W, cut-off 2 % below the
+current SoC) before the all-day Self-Use slot:
+
+- ✅ **`fdPwr` caps the inverter's total output** (house load + export), not the battery's discharge rate.
+  Solar plus battery discharge stayed at ~1.06 kW throughout; the battery only made up what solar didn't
+  (0.3–0.47 kW with 0.6–0.8 kW of solar).
+- ✅ **Solar above `fdPwr` charges the battery** even during a Force Discharge slot (with 1.1–2.5 kW of solar
+  the battery charged at up to 1.5 kW while export stayed ~0.65 kW).
+- ✅ **A house load above `fdPwr` is imported from the grid**: with a 2.1 kW load the inverter kept its ~1 kW
+  output and the house imported 1.15 kW. For an export at peak price, set `fdPwr` to the inverter's rating
+  and let the cut-off end the export.
+- ❓ Stopping at the cut-off wasn't reached in this test (the slot ended first).
+
 ## Fox Cloud field mapping
 
 The Fox Cloud scheduler API holds the same data (see [Fox Cloud API](fox-cloud-api.md) for reliability):
