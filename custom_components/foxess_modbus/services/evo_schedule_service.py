@@ -167,7 +167,7 @@ async def async_write_schedule(
     *,
     enabled: bool,
 ) -> tuple[bool, list[ScheduleGroup]]:
-    """Write changed groups as whole 10-register blocks, then the scheduler switch, then verify.
+    """If any group changed, write all managed groups as one block; then the scheduler switch; then verify.
 
     `managed` must hold all MANAGED_GROUP_COUNT groups, or be None to only change the switch.
     The inverter rejects writes covering part of a 10-register block (including 48000-48009, the
@@ -182,18 +182,22 @@ async def async_write_schedule(
     expected_raw = list(current_raw)
     expected_raw[0] = 1 if enabled else 0
 
+    changed = False
     for index, group in enumerate(wanted):
         registers = group.to_registers()
         offset = _FIRST_GROUP_OFFSET + index * GROUP_SIZE
         expected_raw[offset : offset + GROUP_SIZE] = registers
-        if _comparable(current_groups[index].to_registers()) == _comparable(registers):
-            continue
-        address = group_address(index)
+        if _comparable(current_groups[index].to_registers()) != _comparable(registers):
+            changed = True
+
+    if changed:
+        # All managed groups (48010-48089) in one write, so a schedule is never left half-written.
+        # Hardware-confirmed on an EVO 10-5-H; the FoxESS protocol document also allows this block.
+        address = group_address(0)
         try:
-            # write_registers mutates its argument, so hand it a copy
-            await controller.write_registers(address, list(registers))
+            await controller.write_registers(address, expected_raw[_FIRST_GROUP_OFFSET:])
         except ModbusClientFailedError as ex:
-            raise HomeAssistantError(f"Failed to write schedule slot {index + 1} at {address}: {ex}") from ex
+            raise HomeAssistantError(f"Failed to write the schedule slots at {address}: {ex}") from ex
 
     if current_enabled != enabled:
         try:

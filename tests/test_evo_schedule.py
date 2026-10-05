@@ -73,16 +73,19 @@ class FakeEvo:
         return [self.registers.get(start + i, 0) for i in range(count)]
 
     async def write_registers(self, start: int, values: list[int]) -> None:
-        in_blocks = start >= 48000
-        if in_blocks and ((start - 48000) % GROUP_SIZE != 0 or len(values) != GROUP_SIZE):
+        whole_block = (start - 48000) % GROUP_SIZE == 0 and len(values) == GROUP_SIZE
+        managed_groups = start == 48010 and len(values) == GROUP_SIZE * MANAGED_GROUP_COUNT  # confirmed on hardware
+        if start >= 48000 and not (whole_block or managed_groups):
             raise ModbusClientFailedError("Error writing registers", "fake", "IllegalAddress")  # type: ignore[arg-type]
         self.writes.append((start, list(values)))
         for i, value in enumerate(values):
             if start + i != self._ignored_address:
                 self.registers[start + i] = value
         # Like the real EVO: a Force Charge group written over Modbus stores 0 in its flags (+8)
-        if start >= 48010 and values[3] == 6:
-            self.registers[start + 8] = 0
+        if start >= 48010:
+            for group_start in range(0, len(values), GROUP_SIZE):
+                if values[group_start + 3] == 6:
+                    self.registers[start + group_start + 8] = 0
 
     async def write_register(self, address: int, value: int) -> None:
         await self.write_registers(address, [value])
@@ -180,11 +183,10 @@ async def test_write_schedule_writes_whole_groups_then_switch() -> None:
         enabled=True,
     )
 
-    # Groups 1-3 differ from the capture; groups 4-8 are already blank. The switch goes last.
+    # All eight managed groups in one write (atomic), then the switch block.
+    managed = build_managed_groups([slot], _SELF_USE_FILLER)
     assert inverter.writes == [
-        (48010, slot.to_registers()),
-        (48020, _SELF_USE_FILLER.to_registers()),
-        (48030, BLANK_GROUP.to_registers()),
+        (48010, [r for group in managed for r in group.to_registers()]),
         (48000, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
     ]
     assert enabled is True
@@ -259,7 +261,7 @@ async def test_write_schedule_reports_rejected_write() -> None:
     inverter.write_registers = _reject  # type: ignore[method-assign]
     slot = make_group(start=time(1, 0), end=time(4, 30), work_mode="self_use")
 
-    with pytest.raises(HomeAssistantError, match="slot 1 at 48010"):
+    with pytest.raises(HomeAssistantError, match="schedule slots at 48010"):
         await evo_schedule_service.async_write_schedule(
             inverter,  # type: ignore[arg-type]
             build_managed_groups([slot], _SELF_USE_FILLER),

@@ -115,7 +115,7 @@ Fox Cloud also lists `ForceCharge(BAT)` and `ForceDischarge(BAT)` slot modes; th
 | all 10 registers of an enabled group, FC16 | on | ✅ accepted, read back exactly (except +8, see above) |
 | `48000` alone, FC6 | off | ✅ **rejected** (`IllegalAddress`) |
 | `48000`–`48009` as one block, FC16 | off → on, on → off | ✅ accepted |
-| groups 1–8 (`48010`–`48089`) as one 80-register block | — | ❓ the FoxESS document says this is allowed; it would make a schedule write atomic |
+| groups 1–8 (`48010`–`48089`) as one 80-register block, FC16 | on | ✅ **accepted**, read back exactly — a whole schedule can be written atomically |
 
 ## Behaviour of a Force Charge slot
 
@@ -170,7 +170,8 @@ and gaps found on the EVO are marked ⚠️ above. The document also states — 
 - slot Max SoC and Min SoC On Grid are `[10, 100]`, Min SoC On Grid ≥ the global Minimum SoC (`46609`) and
   ≤ the slot Max SoC, and the cut-off SoC is `[slot Min SoC On Grid, 100]` (Fox Cloud reports a minimum of 5);
 - at most 24 groups — ⚠️ the EVO has 96 readable groups (see above);
-- the table can also be written as four blocks: `48000–48009`, `48010–48089`, `48090–48169`, `48170–48249`.
+- the table can also be written as four blocks: `48000–48009`, `48010–48089`, `48090–48169`, `48170–48249`
+  (✅ `48010–48089` confirmed; the others untested).
 
 ## Relation to earlier foxess_modbus work
 
