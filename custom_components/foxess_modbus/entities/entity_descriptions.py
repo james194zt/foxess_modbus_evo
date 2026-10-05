@@ -200,6 +200,69 @@ def _identity_entities() -> Iterable[EntityFactory]:
             is_hex=True,
             icon="mdi:battery-sync",
         )
+    yield from _installer_setting_entities()
+
+
+def _installer_setting_entities() -> Iterable[EntityFactory]:
+    """Installer settings the Fox app doesn't show (read-only here; never written).
+
+    Read on an EVO 10-5-H set up for a UK G99 install limited to 3.68 kW: rated and max active power
+    3680 W, export / grid-point limits 15000 W (no limit), derating 100 %.
+    """
+
+    def _kw(key: str, holding: list[int], name: str) -> EntityFactory:
+        return ModbusSensorDescription(
+            key=key,
+            addresses=[ModbusAddressesSpec(holding=holding, models=Inv.EVO)],
+            name=name,
+            device_class=SensorDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            scale=0.001,
+            round_to=0.01,
+            icon="mdi:transmission-tower-export",
+            validate=[Range(0, 1000)],
+        )
+
+    # I32 pairs, low word first (controller.read() convention)
+    yield _kw("rated_power", [39054, 39053], "Rated Power")
+    # The most the inverter puts out on the AC side; PV above it goes to the battery or is clipped
+    yield _kw("max_active_power", [39056, 39055], "Max Active Power")
+    yield _kw("installer_export_power_limit", [46617, 46616], "Export Power Limit (Installer)")
+    yield _kw("grid_point_power_limit", [49137, 49136], "Grid Point Power Limit")
+    yield _kw("fixed_active_power_derate", [49009, 49008], "Fixed Active Power Derate")
+    yield ModbusSensorDescription(
+        key="active_power_derating",
+        addresses=[ModbusAddressesSpec(holding=[49007], models=Inv.EVO)],
+        name="Active Power Limit",
+        native_unit_of_measurement="%",
+        scale=0.1,
+        round_to=0.1,
+        icon="mdi:percent",
+        validate=[Range(0, 100)],
+    )
+    for key, holding, name in (
+        ("import_current_limit", 46618, "Import Current Limit"),
+        ("export_current_limit", 46619, "Export Current Limit"),
+    ):
+        yield ModbusSensorDescription(
+            key=key,
+            addresses=[ModbusAddressesSpec(holding=[holding], models=Inv.EVO)],
+            name=name,
+            device_class=SensorDeviceClass.CURRENT,
+            native_unit_of_measurement="A",
+            scale=0.1,
+            round_to=0.1,
+            icon="mdi:current-ac",
+            validate=[Range(0, 1000)],
+        )
+    # Number from the protocol's grid standard table (e.g. 2 G98_UK, 3 G99_UK)
+    yield ModbusSensorDescription(
+        key="grid_standard_code",
+        addresses=[ModbusAddressesSpec(holding=[49079], models=Inv.EVO)],
+        name="Grid Standard Code",
+        signed=False,
+        icon="mdi:certificate-outline",
+    )
 
 
 def _pv_entities() -> Iterable[EntityFactory]:

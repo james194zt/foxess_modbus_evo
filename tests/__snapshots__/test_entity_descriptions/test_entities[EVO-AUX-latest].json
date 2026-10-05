@@ -1,6 +1,16 @@
 [
   {
     "addresses": [
+      49007
+    ],
+    "key": "active_power_derating",
+    "name": "Active Power Limit",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       37618
     ],
     "key": "ambtemp",
@@ -628,6 +638,16 @@
   },
   {
     "addresses": [
+      46619
+    ],
+    "key": "export_current_limit",
+    "name": "Export Current Limit",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39169,
       39168
     ],
@@ -657,6 +677,17 @@
     "name": "Feed-in Total",
     "scale": 0.01,
     "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      49009,
+      49008
+    ],
+    "key": "fixed_active_power_derate",
+    "name": "Fixed Active Power Derate",
+    "scale": 0.001,
+    "signed": true,
     "type": "sensor"
   },
   {
@@ -705,6 +736,27 @@
   },
   {
     "addresses": [
+      49137,
+      49136
+    ],
+    "key": "grid_point_power_limit",
+    "name": "Grid Point Power Limit",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      49079
+    ],
+    "key": "grid_standard_code",
+    "name": "Grid Standard Code",
+    "scale": null,
+    "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39169,
       39168
     ],
@@ -727,6 +779,16 @@
   },
   {
     "addresses": [
+      46618
+    ],
+    "key": "import_current_limit",
+    "name": "Import Current Limit",
+    "scale": 0.1,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       39628,
       39627
     ],
@@ -745,6 +807,17 @@
     "name": "Input Energy Total",
     "scale": 0.01,
     "signed": false,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
+      46617,
+      46616
+    ],
+    "key": "installer_export_power_limit",
+    "name": "Export Power Limit (Installer)",
+    "scale": 0.001,
+    "signed": true,
     "type": "sensor"
   },
   {
@@ -1050,6 +1123,17 @@
   },
   {
     "addresses": [
+      39056,
+      39055
+    ],
+    "key": "max_active_power",
+    "name": "Max Active Power",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       46607
     ],
     "key": "max_charge_current",
@@ -1335,6 +1419,17 @@
       "pv3_power"
     ],
     "type": "lambda"
+  },
+  {
+    "addresses": [
+      39054,
+      39053
+    ],
+    "key": "rated_power",
+    "name": "Rated Power",
+    "scale": 0.001,
+    "signed": true,
+    "type": "sensor"
   },
   {
     "addresses": [

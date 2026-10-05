@@ -34,6 +34,8 @@ Other EVO models and firmware may differ. Please share results from yours (see
   (including the undocumented Max SoC From Grid rule), and Remote Control alongside the scheduler.
 - **[Battery warm-up](battery-warm-up.md)** — the undocumented warm-up settings at `53400`: readable over
   Modbus, but writes are refused.
+- **[Installer settings](installer-settings.md)** — grid standard, max AC output (e.g. a 5 kW EVO limited to
+  3.68 kW), export / grid-point limits and derating: set on the inverter, not shown in the Fox app.
 - **[Identity and version registers](identity-and-versions.md)** — model, serials, firmware, BCU version,
   and why "BMS pack version" sensors show nonsense on the EVO.
 - **[Fox Cloud API](fox-cloud-api.md)** — which Open API calls work on the EVO, and why the cloud can't be
