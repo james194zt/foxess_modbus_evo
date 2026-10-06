@@ -284,6 +284,16 @@
   },
   {
     "addresses": [
+      37003
+    ],
+    "byte_split_decimal": true,
+    "is_hex": false,
+    "key": "bms_bcu_version",
+    "name": "Version: BCU",
+    "type": "sensor"
+  },
+  {
+    "addresses": [
       37619
     ],
     "key": "bms_cell_mv_high_1",
@@ -438,36 +448,6 @@
   },
   {
     "addresses": [
-      37621
-    ],
-    "key": "bms_gap_37621",
-    "name": "BMS Gap Register 37621",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37622
-    ],
-    "key": "bms_gap_37622",
-    "name": "BMS Gap Register 37622",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37623
-    ],
-    "key": "bms_gap_37623",
-    "name": "BMS Gap Register 37623",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
       37632
     ],
     "key": "bms_kwh_remaining_1",
@@ -494,42 +474,6 @@
     "key": "bms_online",
     "name": "BMS Online",
     "type": "binary-sensor"
-  },
-  {
-    "addresses": [
-      37033
-    ],
-    "is_hex": true,
-    "key": "bms_pack_1_version",
-    "name": "BMS Pack 1 Version",
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37034
-    ],
-    "is_hex": true,
-    "key": "bms_pack_2_version",
-    "name": "BMS Pack 2 Version",
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37035
-    ],
-    "is_hex": true,
-    "key": "bms_pack_3_version",
-    "name": "BMS Pack 3 Version",
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37036
-    ],
-    "is_hex": true,
-    "key": "bms_pack_4_version",
-    "name": "BMS Pack 4 Version",
-    "type": "sensor"
   },
   {
     "addresses": [

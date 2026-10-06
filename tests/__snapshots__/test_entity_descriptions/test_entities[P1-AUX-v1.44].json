@@ -245,6 +245,17 @@
   },
   {
     "addresses": [
+      31014
+    ],
+    "invert_sign": false,
+    "key": "grid_status",
+    "name": "Grid Status",
+    "scale": 0.001,
+    "signed": true,
+    "type": "grid_status_sensor"
+  },
+  {
+    "addresses": [
       32020
     ],
     "key": "input_energy_today",

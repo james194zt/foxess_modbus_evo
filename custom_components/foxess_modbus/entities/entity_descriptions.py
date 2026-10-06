@@ -192,14 +192,17 @@ def _identity_entities() -> Iterable[EntityFactory]:
         signed=False,
         icon="mdi:battery-heart",
     )
-    for pack_index, holding in enumerate((37033, 37034, 37035, 37036), start=1):
-        yield ModbusVersionSensorDescription(
-            key=f"bms_pack_{pack_index}_version",
-            address=[ModbusAddressSpec(holding=holding, models=Inv.EVO)],
-            name=f"BMS Pack {pack_index} Version",
-            is_hex=True,
-            icon="mdi:battery-sync",
-        )
+    # BMS master (BCU) firmware version. 37003 = 0x0104 -> "1.004" (Fox app "Version_BCU").
+    # NB 37033+ ("BMS slave n version" in the FoxESS document) are slot numbers (0x1000, 0x2000, ...),
+    # not versions — they were removed, see docs/evo/identity-and-versions.md.
+    yield ModbusVersionSensorDescription(
+        key="bms_bcu_version",
+        address=[ModbusAddressSpec(holding=37003, models=Inv.EVO)],
+        name="Version: BCU",
+        is_hex=False,
+        byte_split_decimal=True,
+        icon="mdi:source-branch",
+    )
     yield from _installer_setting_entities()
 
 
@@ -3001,6 +3004,9 @@ def _bms_entities() -> Iterable[EntityFactory]:
     )
 
     _BMS_PACK1_EXTENDED = Inv.H3_PRO_SET | Inv.H3_SMART | Inv.EVO
+    # H3-Pro reserves 37633-37699 (invalid_register_ranges in inverter_profiles.py), so sensors above
+    # 37632 must exclude it; they still apply to H3 Smart and EVO.
+    _BMS_PACK1_EXTENDED_NO_H3PRO = Inv.H3_SMART | Inv.EVO
     # Fox-style derived health metrics (EVO only — entity keys differ on multi-pack H3).
     _BMS_HEALTH_MODELS = [
         EntitySpec(
@@ -3010,8 +3016,8 @@ def _bms_entities() -> Iterable[EntityFactory]:
     ]
     yield ModbusBatterySensorDescription(
         key="bms_ah_fcc",
-        addresses=[ModbusAddressesSpec(holding=[37633], models=_BMS_PACK1_EXTENDED)],
-        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        addresses=[ModbusAddressesSpec(holding=[37633], models=_BMS_PACK1_EXTENDED_NO_H3PRO)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED_NO_H3PRO)],
         name="BMS FCC Capacity",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Ah",
@@ -3021,8 +3027,8 @@ def _bms_entities() -> Iterable[EntityFactory]:
     )
     yield ModbusBatterySensorDescription(
         key="bms_design_energy_wh",
-        addresses=[ModbusAddressesSpec(holding=[37635], models=_BMS_PACK1_EXTENDED)],
-        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
+        addresses=[ModbusAddressesSpec(holding=[37635], models=_BMS_PACK1_EXTENDED_NO_H3PRO)],
+        bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED_NO_H3PRO)],
         name="BMS Design Energy",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.MEASUREMENT,
@@ -3154,19 +3160,6 @@ def _bms_entities() -> Iterable[EntityFactory]:
         signed=False,
         validate=[Min(0)],
     )
-    # Undocumented gap between min cell mV (37620) and SOH (37624). Fox Cloud health / harmful-event
-    # counters are likely here or in fault bitfields 37626–37631 — enable for correlation probing.
-    for address, key_suffix in ((37621, "37621"), (37622, "37622"), (37623, "37623")):
-        yield ModbusBatterySensorDescription(
-            key=f"bms_gap_{key_suffix}",
-            addresses=[ModbusAddressesSpec(holding=[address], models=_BMS_PACK1_EXTENDED)],
-            bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED)],
-            name=f"BMS Gap Register {key_suffix}",
-            state_class=SensorStateClass.MEASUREMENT,
-            signed=False,
-            entity_registry_enabled_default=False,
-            icon="mdi:help-rhombus",
-        )
     for address, fault_index in (
         (37626, 1),
         (37627, 2),

@@ -23,6 +23,9 @@ class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  #
 
     address: list[ModbusAddressSpec]
     is_hex: bool
+    # High byte "." low byte as 3 decimal digits, e.g. BCU version 0x0104 -> "1.004". Mutually exclusive
+    # with is_hex. Kept off by default so existing version sensors serialize unchanged.
+    byte_split_decimal: bool = False
 
     @property
     def entity_type(self) -> type[Entity]:
@@ -42,13 +45,16 @@ class ModbusVersionSensorDescription(SensorEntityDescription, EntityFactory):  #
         if addresses is None:
             return None
 
-        return {
+        result: dict[str, Any] = {
             "type": "sensor",
             "key": self.key,
             "name": self.name,
             "addresses": addresses,
             "is_hex": self.is_hex,
         }
+        if self.byte_split_decimal:
+            result["byte_split_decimal"] = True
+        return result
 
 
 class ModbusVersionSensor(ModbusEntityMixin, SensorEntity):
@@ -78,6 +84,10 @@ class ModbusVersionSensor(ModbusEntityMixin, SensorEntity):
             major = value >> 8
             minor = value & 0xFF
             return f"{major:X}.{minor:02X}"
+
+        if entity_description.byte_split_decimal:
+            # e.g. BCU version 0x0104 -> "1.004"
+            return f"{value >> 8}.{value & 0xFF:03d}"
 
         major = value // 100
         minor = value % 100

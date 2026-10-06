@@ -412,36 +412,6 @@
   },
   {
     "addresses": [
-      37621
-    ],
-    "key": "bms_gap_37621",
-    "name": "BMS Gap Register 37621",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37622
-    ],
-    "key": "bms_gap_37622",
-    "name": "BMS Gap Register 37622",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
-      37623
-    ],
-    "key": "bms_gap_37623",
-    "name": "BMS Gap Register 37623",
-    "scale": null,
-    "signed": false,
-    "type": "sensor"
-  },
-  {
-    "addresses": [
       37632
     ],
     "key": "bms_kwh_remaining_1",
