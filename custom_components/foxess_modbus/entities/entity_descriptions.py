@@ -1920,10 +1920,21 @@ def _inverter_entities() -> Iterable[EntityFactory]:
                 holding=[31019], models=Inv.H1_G1 | Inv.H1_LAN | Inv.H1_G2_SET | Inv.KH_PRE133 | Inv.KH_133
             ),
             ModbusAddressesSpec(holding=[31033], models=Inv.H3_SET),
-            # EVO has no separate ambient sensor; Fox app shows BMS min cell temp (37618) as "ambient".
-            ModbusAddressesSpec(holding=[37618], models=Inv.EVO),
         ],
         name="Ambient Temp",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="°C",
+        scale=0.1,
+        round_to=0.5,
+        validate=[Range(-50, 100)],
+    )
+    # EVO has no ambient sensor: 37618 is the BMS min cell temperature (same register as BMS 1 Cell Temp Low).
+    # Key kept as "ambtemp" so existing entities keep their history. See docs/evo/battery-temperatures.md.
+    yield ModbusSensorDescription(
+        key="ambtemp",
+        addresses=[ModbusAddressesSpec(holding=[37618], models=Inv.EVO)],
+        name="Battery 1 Min Cell Temp",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="°C",
@@ -2723,6 +2734,7 @@ def _bms_entities() -> Iterable[EntityFactory]:
         include_battery_soc: bool = True,
         include_battery_soh: bool = True,
         bms_kwh_remaining_name: str | None = None,
+        battery_temp_name: str | None = None,
     ) -> Iterable[EntityFactory]:
         key_suffix = f"_{index}" if index is not None else ""
         name_infix = f" {index}" if index is not None else ""
@@ -2777,7 +2789,7 @@ def _bms_entities() -> Iterable[EntityFactory]:
             key=f"battery_temp{key_suffix}",
             addresses=battery_temp,
             bms_connect_state_address=bms_connect_state_address,
-            name=f"Battery{name_infix} Temp",
+            name=battery_temp_name or f"Battery{name_infix} Temp",
             device_class=SensorDeviceClass.TEMPERATURE,
             state_class=SensorStateClass.MEASUREMENT,
             native_unit_of_measurement="°C",
@@ -2934,6 +2946,8 @@ def _bms_entities() -> Iterable[EntityFactory]:
         bms_kwh_remaining=[ModbusAddressesSpec(holding=[37632], models=Inv.EVO)],
         include_battery_soh=False,
         bms_kwh_remaining_name="BMS 1 Nominal Capacity",
+        # 37611 is "BMS1 Ambient Temperature" (BMS board), not a cell. See docs/evo/battery-temperatures.md.
+        battery_temp_name="Battery 1 BMS Board Temp",
     )
     yield ModbusBatteryKwhRemainingSensorDescription(
         key="battery_kwh_remaining",

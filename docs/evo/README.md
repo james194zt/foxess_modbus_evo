@@ -34,6 +34,8 @@ Other EVO models and firmware may differ. Please share results from yours (see
   (including the undocumented Max SoC From Grid rule), and Remote Control alongside the scheduler.
 - **[Battery warm-up](battery-warm-up.md)** — the undocumented warm-up settings at `53400`: readable over
   Modbus, but writes are refused.
+- **[Battery temperatures](battery-temperatures.md)** — which of `37611`, `37617` and `37618` are cells and
+  which is the BMS board, with the data that proves it (and why two sensors were renamed).
 - **[Installer settings](installer-settings.md)** — grid standard, max AC output (e.g. a 5 kW EVO limited to
   3.68 kW), export / grid-point limits and derating: set on the inverter, not shown in the Fox app.
 - **[Identity and version registers](identity-and-versions.md)** — model, serials, firmware, BCU version,
@@ -69,3 +71,5 @@ This repository's foxess_modbus fork implements the findings:
 - Work mode (`49203`) written with the correct 1-based codes; Remote Control puts the previous work mode back
   when it's disabled.
 - Read-only **Battery Warm-up** entities (on/off, start/end temperature, periods 1–3).
+- Battery temperature sensors named for what they measure: **Battery 1 BMS Board Temp** (`37611`) and
+  **Battery 1 Min Cell Temp** (`37618`, formerly "Ambient Temp").

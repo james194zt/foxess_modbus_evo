@@ -14,7 +14,7 @@
       37618
     ],
     "key": "ambtemp",
-    "name": "Ambient Temp",
+    "name": "Battery 1 Min Cell Temp",
     "scale": 0.1,
     "signed": true,
     "type": "sensor"
@@ -189,7 +189,7 @@
       37611
     ],
     "key": "battery_temp_1",
-    "name": "Battery 1 Temp",
+    "name": "Battery 1 BMS Board Temp",
     "scale": 0.1,
     "signed": true,
     "type": "sensor"
