@@ -43,6 +43,7 @@ from .modbus_battery_health_sensors import round_trip_efficiency_remaining_perce
 from .modbus_battery_health_sensors import self_discharge_rate_percent_per_day
 from .modbus_lambda_sensor import ModbusLambdaSensorDescription
 from .modbus_number import ModbusNumberDescription
+from .modbus_select import ModbusSelectDescription
 from .modbus_sensor import ModbusSensorDescription
 from .modbus_binary_sensor import ModbusBinarySensorDescription
 from .modbus_string_sensor import ModbusProtocolVersionSensorDescription
@@ -207,7 +208,7 @@ def _identity_entities() -> Iterable[EntityFactory]:
 
 
 def _installer_setting_entities() -> Iterable[EntityFactory]:
-    """Installer settings the Fox app doesn't show (read-only here; never written).
+    """Installer settings the Fox app doesn't show, as read-only sensors (a few are also writable, see below).
 
     Read on an EVO 10-5-H set up for a UK G99 install limited to 3.68 kW: rated and max active power
     3680 W, export / grid-point limits 15000 W (no limit), derating 100 %.
@@ -300,6 +301,81 @@ def _installer_setting_entities() -> Iterable[EntityFactory]:
             signed=False,
             icon=icon,
         )
+    yield from _installer_writable_entities()
+
+
+def _installer_writable_entities() -> Iterable[EntityFactory]:
+    """Installer settings the EVO accepts writes to (each tested on an EVO 10-5-H, docs/evo/installer-settings.md).
+
+    They're probably kept in flash, so the numbers read the registers live first, skip unchanged values, allow one
+    change a minute and read back afterwards. The read-only sensors above stay for anything that already uses them.
+    Left read-only on purpose: grid code, rated / max active power, derating, grid point limit, meter types and EPS
+    frequency (G99 / DNO or metering), and meter compensation (49248 refuses every write).
+    """
+    interval = 60.0
+    # 46501-46502 and 46504-46505 refuse writes on their own; the inverter only takes the whole 46501-46514 block
+    peak_shaving_block = (46501, 14)
+
+    def _watts(
+        key: str, holding: list[int], name: str, icon: str, max_value: int, block: tuple[int, int] | None
+    ) -> EntityFactory:
+        return ModbusNumberDescription(
+            key=key,
+            addresses=[ModbusAddressesSpec(holding=holding, models=Inv.EVO)],
+            name=name,
+            mode=NumberMode.BOX,
+            native_min_value=0,
+            native_max_value=max_value,
+            native_step=1,
+            native_unit_of_measurement="W",
+            device_class=NumberDeviceClass.POWER,
+            icon=icon,
+            validate=[Range(0, 99999)],
+            min_write_interval=interval,
+            write_block=block,
+        )
+
+    # 15000 W (the default) = no limit; 0 = no export while Self Use keeps running
+    yield _watts(
+        "export_power_limit", [46617, 46616], "Export Power Limit", "mdi:transmission-tower-export", 15000, None
+    )
+    yield _watts(
+        "import_power_limit",
+        [46502, 46501],
+        "Import Power Limit",
+        "mdi:transmission-tower-import",
+        15000,
+        peak_shaving_block,
+    )
+    yield _watts(
+        "peak_shaving_export_limit",
+        [46505, 46504],
+        "Peak Shaving Export Limit",
+        "mdi:transmission-tower-export",
+        15000,
+        peak_shaving_block,
+    )
+    yield ModbusNumberDescription(
+        key="peak_shaving_threshold_soc",
+        addresses=[ModbusAddressesSpec(holding=[46503], models=Inv.EVO)],
+        name="Peak Shaving Threshold SoC",
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement="%",
+        device_class=NumberDeviceClass.BATTERY,
+        icon="mdi:battery-arrow-down-outline",
+        validate=[Range(0, 100)],
+        min_write_interval=interval,
+    )
+    yield ModbusSelectDescription(
+        key="mppt_scan",
+        address=[ModbusAddressSpec(holding=49210, models=Inv.EVO)],
+        name="MPPT Scan",
+        icon="mdi:solar-panel",
+        options_map={0: "Off", 1: "On"},
+    )
 
 
 def _pv_entities() -> Iterable[EntityFactory]:

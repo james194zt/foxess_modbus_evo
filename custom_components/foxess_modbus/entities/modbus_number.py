@@ -1,6 +1,8 @@
 """Select"""
 
+import asyncio
 import logging
+import time
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -11,6 +13,7 @@ from homeassistant.components.number import NumberEntity
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.number import NumberMode
 from homeassistant.const import Platform
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import Entity
 
 from ..common.entity_controller import EntityController
@@ -24,6 +27,9 @@ from .modbus_entity_mixin import ModbusEntityMixin
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
+# Wait before reading a guarded write back
+_VERIFY_DELAY_SECS = 1.0
+
 
 @dataclass(kw_only=True, **ENTITY_DESCRIPTION_KWARGS)
 class ModbusNumberDescription(NumberEntityDescription, EntityFactory):  # type: ignore[misc]
@@ -34,6 +40,13 @@ class ModbusNumberDescription(NumberEntityDescription, EntityFactory):  # type: 
     scale: float | None = None
     post_process: Callable[[float], float] | None = None
     validate: list[BaseValidator] = field(default_factory=list)
+    # Guarded write for settings the inverter probably keeps in flash (installer settings): read the
+    # registers live, skip the write if nothing changes, refuse writes closer together than this many
+    # seconds, and read back afterwards. None = plain write every time.
+    min_write_interval: float | None = None
+    # (start, count): the inverter only accepts these registers as part of this whole block, so read the
+    # block live, replace our registers in it and write it back in one go. Implies a guarded write.
+    write_block: tuple[int, int] | None = None
 
     @property
     def entity_type(self) -> type[Entity]:
@@ -46,7 +59,7 @@ class ModbusNumberDescription(NumberEntityDescription, EntityFactory):  # type: 
         register_type: RegisterType,
     ) -> Entity | None:
         addresses = self._addresses_for_inverter_model(self.addresses, inverter_model, register_type)
-        return ModbusNumber(controller, self, addresses) if addresses is not None else None
+        return ModbusNumber(controller, self, addresses, register_type) if addresses is not None else None
 
     def serialize(self, inverter_model: Inv, register_type: RegisterType) -> dict[str, Any] | None:
         addresses = self._addresses_for_inverter_model(self.addresses, inverter_model, register_type)
@@ -70,13 +83,16 @@ class ModbusNumber(ModbusEntityMixin, NumberEntity):
         controller: EntityController,
         entity_description: ModbusNumberDescription,
         addresses: list[int],
+        register_type: RegisterType = RegisterType.HOLDING,
     ) -> None:
         """Initialize the sensor."""
 
         self._controller = controller
         self.entity_description = entity_description
         self._addresses = addresses
+        self._register_type = register_type
         self._pending_value: float | None = None
+        self._last_write: float | None = None
         self.entity_id = self._get_entity_id(Platform.NUMBER)
 
     @property
@@ -125,7 +141,9 @@ class ModbusNumber(ModbusEntityMixin, NumberEntity):
 
             int_value = int(round(value))
 
-            if len(self._addresses) == 1:
+            if entity_description.min_write_interval is not None or entity_description.write_block is not None:
+                await self._guarded_write(entity_description, int_value)
+            elif len(self._addresses) == 1:
                 await self._controller.write_register(self._addresses[0], int_value)
             else:
                 # I32: self._addresses follows read() convention: [low_word_reg, high_word_reg]
@@ -137,6 +155,55 @@ class ModbusNumber(ModbusEntityMixin, NumberEntity):
                 await self._controller.write_registers(high_word_reg, [hi, lo])
         finally:
             self._pending_value = None
+            self.async_write_ha_state()
+
+    def _target_words(self, int_value: int) -> dict[int, int]:
+        """Register address -> raw word to write"""
+        if len(self._addresses) == 1:
+            return {self._addresses[0]: int_value & 0xFFFF}
+        # [low_word_reg, high_word_reg]
+        return {self._addresses[1]: (int_value >> 16) & 0xFFFF, self._addresses[0]: int_value & 0xFFFF}
+
+    async def _read_live(self, start: int, count: int) -> list[int]:
+        try:
+            return await self._controller.read_registers(start, count, self._register_type)
+        except Exception as ex:
+            raise HomeAssistantError(f"{self.name}: couldn't read registers {start}-{start + count - 1}: {ex}") from ex
+
+    async def _guarded_write(self, entity_description: ModbusNumberDescription, int_value: int) -> None:
+        target = self._target_words(int_value)
+        if entity_description.write_block is not None:
+            start, count = entity_description.write_block
+        else:
+            start, count = min(target), len(target)
+
+        current = await self._read_live(start, count)
+        values = list(current)
+        for address, word in target.items():
+            values[address - start] = word
+        if values == current:
+            _LOGGER.debug("%s: already %s, not writing", self.name, int_value)
+            return
+
+        interval = entity_description.min_write_interval
+        if interval is not None and self._last_write is not None:
+            wait = interval - (time.monotonic() - self._last_write)
+            if wait > 0:
+                raise HomeAssistantError(
+                    f"{self.name} was changed less than {interval:.0f} s ago; try again in {wait:.0f} s "
+                    "(limited to protect the inverter's settings memory)"
+                )
+
+        self._last_write = time.monotonic()
+        try:
+            await self._controller.write_registers(start, values)
+        except Exception as ex:
+            raise HomeAssistantError(f"{self.name}: the inverter refused the write: {ex}") from ex
+
+        await asyncio.sleep(_VERIFY_DELAY_SECS)
+        actual = await self._read_live(start, count)
+        if any(actual[address - start] != word for address, word in target.items()):
+            raise HomeAssistantError(f"{self.name}: wrote {int_value} but the inverter reads back something else")
 
     @property
     def addresses(self) -> list[int]:

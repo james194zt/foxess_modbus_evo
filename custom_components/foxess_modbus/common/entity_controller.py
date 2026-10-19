@@ -9,6 +9,7 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 
 from .types import RegisterPollType
+from .types import RegisterType
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -129,6 +130,10 @@ class EntityController(ABC):
     @abstractmethod
     async def write_registers(self, start_address: int, values: list[int]) -> None:
         """Write multiple registers"""
+
+    @abstractmethod
+    async def read_registers(self, start_address: int, num_registers: int, register_type: RegisterType) -> list[int]:
+        """Read registers straight from the inverter (not the last-polled values)"""
 
     @abstractmethod
     def read(self, address: int | list[int], *, signed: bool) -> int | None:

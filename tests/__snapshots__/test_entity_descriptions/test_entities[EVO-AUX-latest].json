@@ -612,6 +612,16 @@
   },
   {
     "addresses": [
+      46617,
+      46616
+    ],
+    "key": "export_power_limit",
+    "name": "Export Power Limit",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
       39169,
       39168
     ],
@@ -750,6 +760,16 @@
     "scale": 0.1,
     "signed": true,
     "type": "sensor"
+  },
+  {
+    "addresses": [
+      46502,
+      46501
+    ],
+    "key": "import_power_limit",
+    "name": "Import Power Limit",
+    "scale": null,
+    "type": "number"
   },
   {
     "addresses": [
@@ -1270,6 +1290,18 @@
   },
   {
     "addresses": [
+      49210
+    ],
+    "key": "mppt_scan",
+    "name": "MPPT Scan",
+    "type": "select",
+    "values": {
+      "0": "Off",
+      "1": "On"
+    }
+  },
+  {
+    "addresses": [
       39002,
       39003,
       39004,
@@ -1329,6 +1361,16 @@
   },
   {
     "addresses": [
+      46505,
+      46504
+    ],
+    "key": "peak_shaving_export_limit",
+    "name": "Peak Shaving Export Limit",
+    "scale": null,
+    "type": "number"
+  },
+  {
+    "addresses": [
       46503
     ],
     "key": "peak_shaving_threshold_soc",
@@ -1336,6 +1378,15 @@
     "scale": null,
     "signed": false,
     "type": "sensor"
+  },
+  {
+    "addresses": [
+      46503
+    ],
+    "key": "peak_shaving_threshold_soc",
+    "name": "Peak Shaving Threshold SoC",
+    "scale": null,
+    "type": "number"
   },
   {
     "addresses": [

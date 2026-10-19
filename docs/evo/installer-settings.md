@@ -1,8 +1,8 @@
-# EVO installer settings (read-only)
+# EVO installer settings
 
 Settings an installer sets on the inverter itself (its on-board menus) that the Fox app doesn't show. The fork
-exposes them as read-only sensors; nothing here is ever written. Read on an EVO 10-5-H (5 kW model) set up for a
-UK G99 connection limited to 3.68 kW.
+exposes them all as read-only sensors, and a few as controls you can change (see [Writable settings](#writable-settings)).
+Read on an EVO 10-5-H (5 kW model) set up for a UK G99 connection limited to 3.68 kW.
 
 | Sensor | Holding register(s) | Format | Example | Notes |
 |---|---|---|---|---|
@@ -37,3 +37,32 @@ Evidence the AC cap is real: on a clear day PV peaked at 4.48 kW while the inver
 3.688 kW, sitting at 3.67 kW for long stretches; the battery took the rest.
 
 32-bit values are two registers, high word first (the fork lists them low word first, its read convention).
+
+## Writable settings
+
+Tested on the same EVO 10-5-H (19 Oct 2026): each one was set to a different harmless value, read back and put back.
+
+| Control | Register(s) | Range | How the inverter accepts the write |
+|---|---|---|---|
+| Export Power Limit (number, W) | 46616–46617 | 0–15000 | Both registers together (function 16). 15000 = no limit; 0 = no export while Self Use carries on |
+| Import Power Limit (number, W) | 46501–46502 | 0–15000 | **Only the whole 46501–46514 block** (function 16, 14 registers) |
+| Peak Shaving Export Limit (number, W) | 46504–46505 | 0–15000 | Only the whole 46501–46514 block |
+| Peak Shaving Threshold SoC (number, %) | 46503 | 0–100 | On its own (function 6) |
+| MPPT Scan (select Off / On) | 49210 | 0 / 1 | On its own (function 6) |
+
+46501–46502 and 46504–46505 refuse every smaller write (on their own, as a pair, 46501 ×3, ×5) with exception 2
+(illegal address), but take the full 14-register block. The fork reads the block, changes only its own registers and
+writes the block back, so the rest of it is left as it was.
+
+The numbers are installer settings the inverter probably keeps in flash memory, so the fork treats them carefully:
+it reads the registers live first and doesn't write if nothing would change, allows one change a minute per
+setting (a quicker second change is refused with a message), and reads the value back afterwards (an error if it
+didn't stick). Don't drive them from an automation that follows the house load; switch them at fixed times.
+
+**Not writable:**
+- Meter Compensation (49248) refuses every write shape tried (on its own, 49247 ×2, 49241 ×8 / ×13, 49229 ×25,
+  49248 ×6). The readable block runs 49200–49253 and includes the work mode and the inverter clock, so a write of the
+  whole block wasn't tried.
+- Left read-only on purpose: Grid Standard Code, Rated / Max Active Power, Active Power Limit, Fixed Active Power
+  Derate, Grid Point Power Limit (G99 / DNO settings), Meter 1 / 2 type (metering) and EPS Frequency. Changing these
+  belongs to the installer.
