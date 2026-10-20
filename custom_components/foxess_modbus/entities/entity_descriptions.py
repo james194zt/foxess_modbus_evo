@@ -3041,7 +3041,8 @@ def _bms_entities() -> Iterable[EntityFactory]:
         bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=Inv.EVO)],
         capacity_scale=0.01,
         name="Battery kWh Remaining",
-        device_class=SensorDeviceClass.ENERGY,
+        # Energy held in the battery (goes up and down), not a meter: HA's ENERGY needs total / total_increasing
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="kWh",
         icon="mdi:battery-high",
@@ -3106,7 +3107,7 @@ def _bms_entities() -> Iterable[EntityFactory]:
         addresses=[ModbusAddressesSpec(holding=[37635], models=_BMS_PACK1_EXTENDED_NO_H3PRO)],
         bms_connect_state_address=[ModbusAddressSpec(holding=37002, models=_BMS_PACK1_EXTENDED_NO_H3PRO)],
         name="BMS Design Energy",
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="Wh",
         # EVO live read: raw 1024 → Fox Capacity 10240 Wh (×10, not PDF 0.1).
