@@ -66,7 +66,7 @@ Slots use the same codes as `49203`:
 | Code | Mode | Status |
 |---|---|---|
 | 1 | Self Use | ✅ |
-| 2 | Feed-in First | ✅ |
+| 2 | Feed-in First | ✅ (in a daytime slot: 1.39 kW solar, 0.25 kW house, 1.06 kW exported, battery idle) |
 | 3 | Back-up | ✅ |
 | 4 | Peak Shaving | ❓ listed in the FoxESS document; the Fox app doesn't offer it for slots |
 | 5 | PowerStation | ❓ listed in the FoxESS document |
@@ -143,7 +143,13 @@ current SoC) before the all-day Self-Use slot:
 - ✅ **A house load above `fdPwr` is imported from the grid**: with a 2.1 kW load the inverter kept its ~1 kW
   output and the house imported 1.15 kW. For an export at peak price, set `fdPwr` to the inverter's rating
   and let the cut-off end the export.
-- ❓ Stopping at the cut-off wasn't reached in this test (the slot ended first).
+- ✅ **Cut-off:** tested again at night (no solar, `fdPwr` 1000 W, cut-off 76 %). The displayed SoC reached 76 %
+  and the battery **kept discharging** at full rate for about 5 more minutes; it stopped when the SoC fell to
+  75 %. So discharge stops when the SoC drops **below** the cut-off (about 1 % under), not when it reaches it.
+  The BMS SoC (`37612`) and system SoC (`39423`) matched the displayed SoC throughout.
+- ✅ **After the cut-off the battery holds** for the rest of the slot, as with Force Charge: no discharge, and
+  the house runs from the grid. For an export at peak price, set the cut-off 1 % above the level you want to
+  stop at, and end or remove the slot once it's reached, or the house imports for the rest of the slot.
 
 ## Fox Cloud field mapping
 

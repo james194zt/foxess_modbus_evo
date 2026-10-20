@@ -27,12 +27,20 @@ FoxESS protocol document · ❓ not yet tested.
 The Fox app's "Version_Master / Slave / Manager" and "Version_BCU" map as above. Integrations showing
 "BMS pack *n* version" from `37033`+ will show meaningless values on the EVO.
 
-## AFCI version — not in the holding registers
+## Model name
 
-The Fox app shows "Version_AFCI" (0.37 on the test unit), but **no holding register from 30000 to 49999
-holds it** — every readable register in that range was read and checked for `0x0037`, `37` and ASCII "0.37".
+EVO model names read **EVO *battery kWh*-*inverter kW*-*variant***: an `EVO 10-5-H` has a 10 kWh battery and a
+5 kW inverter. Use the second number, not the first, as the inverter's power rating (and check
+[installer settings](installer-settings.md): the AC output can be capped lower, e.g. 3.68 kW for a UK G99 install).
+
+## AFCI version — not found in any register
+
+The Fox app shows "Version_AFCI" (0.37 on the test unit at first, 0.38 after a firmware update), but **no
+register holds it** that we could find. Holding registers 30000–49999 were checked for `0x0037`, `37` and ASCII
+"0.37"; the later sweeps of holding 50000–65535 and input 30000–49999 (which turned out to mirror the holding
+registers) didn't turn it up either.
 The FoxESS document has no AFCI version register either (only a "DC arc fault" alarm). It is most likely
-reported only to the Fox datalogger / cloud. Input registers were not searched.
+reported only to the Fox datalogger / cloud.
 
 ## Readable ranges
 

@@ -67,6 +67,12 @@ the exception code straight away. Keep each connection short, and match replies 
   find what moved.
 - Don't stop at `49999`. Battery warm-up turned out to be at `53400`, above every documented range. Holding
   registers `50000`–`65535` are mostly unreadable on the EVO, so this sweep is quick.
+- Input registers (FC04) `30000`–`49999` mirror the holding registers on the EVO, so a holding sweep covers them.
+- **Writes have shapes too.** Some registers only accept a write as part of a particular block (`48000`–`48009`,
+  each scheduler group, `46501`–`46514`), and refuse the same values written alone with exception 2. Before
+  deciding a register is read-only, write its **current** value back in a few shapes (alone, with its
+  neighbours, from the start of the readable block). Never include registers like the clock (`49222`+) or the
+  work mode in a test block: writing back an old copy of a moving value changes it.
 
 ## Value encodings seen on the EVO
 
@@ -78,6 +84,26 @@ the exception code straight away. Keep each connection short, and match replies 
 | BCU version | high byte `.` low byte as 3 digits | `0x0104` → 1.004 |
 | Protocol version | 2 registers → 4 bytes | `0x0105`, `0x0400` → V1.05.04.00 |
 | Text | ASCII, 2 characters per register | `0x4556`, `0x4F20` → "EVO " |
+
+## Open questions
+
+Help with any of these is welcome:
+
+- **Unidentified readable blocks:** holding `32001`–`32020`, `50021`–`50045`, `55000`–`55020` and `60003`–`60005`.
+  Try the change-one-thing method with a harmless setting from the inverter's own menu or the app.
+- **Readable but unconfirmed** (0 / off on the test unit): `39057`–`39060` (both read 3680; probably apparent and
+  reactive power maximums), power factor / reactive power `49005`, `49006`, `49010`, balance load `46614`–`46615`,
+  idle mode `49229`–`49230`, buzzer `49209`, screen brightness `49221`, relays `49211`–`49212`, ripple control
+  `49241`–`49246`.
+- **AFCI version:** shown in the Fox app, not found in any register ([details](identity-and-versions.md)).
+- **Battery warm-up `53412`–`53414`** (a hidden fourth period?) and whether any register shows warm-up actually
+  running. Worth reading while the battery is warming in cold weather ([details](battery-warm-up.md)).
+- **Export Power Limit = 0 under solar:** the write works; whether export really drops to ~0 hasn't been watched.
+- **Mode Scheduler:** offset +7, the +8 flag bits, the codes for Fox Cloud's `ForceCharge(BAT)` /
+  `ForceDischarge(BAT)`, slot modes 4 / 5, and the protocol document's slot SoC rules
+  ([details](mode-scheduler.md)).
+- **Battery max charge / discharge current** (`46607` / `46608`): readable, writes not tested on the EVO.
+- **`37065`–`37068`** read 255 each, one per battery slot.
 
 ## Sharing results
 

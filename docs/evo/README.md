@@ -37,13 +37,14 @@ Other EVO models and firmware may differ. Please share results from yours (see
 - **[Battery temperatures](battery-temperatures.md)** — which of `37611`, `37617` and `37618` are cells and
   which is the BMS board, with the data that proves it (and why two sensors were renamed).
 - **[Installer settings](installer-settings.md)** — grid standard, max AC output (e.g. a 5 kW EVO limited to
-  3.68 kW), export / grid-point limits and derating: set on the inverter, not shown in the Fox app.
+  3.68 kW), export / import / grid-point limits and derating: set on the inverter, not shown in the Fox app.
+  Which of them can be written, and how (the export and import limits, peak shaving, MPPT scan).
 - **[Identity and version registers](identity-and-versions.md)** — model, serials, firmware, BCU version,
   and why "BMS pack version" sensors show nonsense on the EVO.
 - **[Fox Cloud API](fox-cloud-api.md)** — which Open API calls work on the EVO, and why the cloud can't be
   trusted to show the inverter's state.
-- **[Testing method](testing-method.md)** — how to probe safely, find unknown registers, decode values, and
-  read Modbus exception codes.
+- **[Testing method](testing-method.md)** — how to probe safely, find unknown registers, decode values, read
+  Modbus exception codes, and the [open questions](testing-method.md#open-questions) still to answer.
 
 ## The things most likely to catch you out
 
@@ -58,7 +59,14 @@ Other EVO models and firmware may differ. Please share results from yours (see
    level**. Lower `46620` first.
 5. **The Fox app and cloud lag behind or miss Modbus changes** — especially the Mode Scheduler switch. Read
    the registers; and saving in the app may write its stale view back.
-6. **A Force Charge slot honours its power and cut-off SoC, then holds the battery** until the slot ends.
+6. **A Force Charge slot honours its power and cut-off SoC, then holds the battery** until the slot ends. A Force
+   Discharge slot does the same, stopping about 1 % **below** its cut-off; its power caps the inverter's whole
+   output, not just the battery.
+7. **Some installer settings only accept whole-block writes.** The import limit (`46501`–`46502`) and peak
+   shaving export limit (`46504`–`46505`) refuse writes on their own but accept the full `46501`–`46514` block.
+   An `IllegalAddress` reply often means "wrong shape", not "read-only".
+8. **The model name is battery kWh, then inverter kW**: an EVO 10-5-H is a 5 kW inverter, and its AC output may be
+   capped lower by the installer.
 
 ## Using this with Home Assistant
 
@@ -73,3 +81,7 @@ This repository's foxess_modbus fork implements the findings:
 - Read-only **Battery Warm-up** entities (on/off, start/end temperature, periods 1–3).
 - Battery temperature sensors named for what they measure: **Battery 1 BMS Board Temp** (`37611`) and
   **Battery 1 Min Cell Temp** (`37618`, formerly "Ambient Temp").
+- Read-only sensors for the installer settings, and **Version: BCU** (`37003`).
+- Writable **Export Power Limit**, **Import Power Limit**, **Peak Shaving Export Limit** and **Peak Shaving
+  Threshold SoC** numbers, and an **MPPT Scan** select. The numbers write the block the inverter needs, skip
+  unchanged values, allow one change a minute and read the value back.

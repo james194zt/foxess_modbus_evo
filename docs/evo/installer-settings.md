@@ -25,6 +25,10 @@ Read on an EVO 10-5-H (5 kW model) set up for a UK G99 connection limited to 3.6
 | EPS Frequency Setting | 46612 | U16 code | 1 | 0 invalid, 1 50 Hz, 2 60 Hz (the live EPS frequency is 39218) |
 | MPPT Scan | 49210 | U16 | 0 | 0 off, 1 on |
 
+Some sources (including AI assistants working from other Fox models' maps) call `46614`–`46615` the import power
+limit. On the EVO they read 0 and are balance load / balance logic first, as in the protocol document; the import
+limit is `46501`–`46502` (13000 W here).
+
 46500 refuses reads on the EVO (the block starts at 46501). 46506–46514 (peak-shaving "charge in low import"
 times) read 0. Also readable and 0 / off here, not exposed: power factor and reactive power settings (49005,
 49006, 49010), balance load (46614–46615), idle mode (49229–49230), off-grid master (49247), buzzer (49209),
@@ -44,7 +48,7 @@ Tested on the same EVO 10-5-H (19 Oct 2026): each one was set to a different har
 
 | Control | Register(s) | Range | How the inverter accepts the write |
 |---|---|---|---|
-| Export Power Limit (number, W) | 46616–46617 | 0–15000 | Both registers together (function 16). 15000 = no limit; 0 = no export while Self Use carries on |
+| Export Power Limit (number, W) | 46616–46617 | 0–15000 | Both registers together (function 16). 15000 = no limit; 0 should stop export while Self Use carries on (❓ not yet watched under solar) |
 | Import Power Limit (number, W) | 46501–46502 | 0–15000 | **Only the whole 46501–46514 block** (function 16, 14 registers) |
 | Peak Shaving Export Limit (number, W) | 46504–46505 | 0–15000 | Only the whole 46501–46514 block |
 | Peak Shaving Threshold SoC (number, %) | 46503 | 0–100 | On its own (function 6) |
@@ -63,6 +67,9 @@ didn't stick). Don't drive them from an automation that follows the house load; 
 - Meter Compensation (49248) refuses every write shape tried (on its own, 49247 ×2, 49241 ×8 / ×13, 49229 ×25,
   49248 ×6). The readable block runs 49200–49253 and includes the work mode and the inverter clock, so a write of the
   whole block wasn't tried.
+- We found no "emergency stop" register. Only DRM (`49206`, Australia only) comes close, and Remote Control at 0 W
+  doesn't de-energise anything (solar strings stay live). Emergency isolation is the AC, DC (PV) and battery
+  isolators, not software.
 - Left read-only on purpose: Grid Standard Code, Rated / Max Active Power, Active Power Limit, Fixed Active Power
   Derate, Grid Point Power Limit (G99 / DNO settings), Meter 1 / 2 type (metering) and EPS Frequency. Changing these
   belongs to the installer.

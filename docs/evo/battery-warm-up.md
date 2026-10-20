@@ -64,6 +64,17 @@ The inverter's own data logger (the built-in Wi-Fi module that links it to the F
 settings, possibly over Modbus on its own internal port. Its traffic can't be watched without opening the
 inverter, so how it writes is unknown.
 
+**No writable "mirror" elsewhere.** A suggestion that the block is input-only and has a writable copy at a
+shifted address was checked with reads only: `53400` reads identically as holding (FC03) and input (FC04), and
+`3400`, `13400`, `23400`, `33400`, `43400` and `63400` refuse even reads, as holding and as input. Vendor-specific
+function codes were suggested too; they weren't tried, because an unknown function code could do anything.
+
+**Watching the cloud's command didn't work either.** To see how the Fox Cloud sends a warm-up change, the
+inverter's traffic was pointed at a local proxy by rewriting its DNS. The built-in logger never used the local
+DNS server: it keeps one long-lived TLS connection open to the Fox Cloud, even across an inverter restart. So
+DNS-based interception can't see it; it would need routing-level redirection, which wasn't attempted. (The Fox
+phone app did reach the proxy and rejected its certificate.)
+
 The same writes were refused in the same way with warm-up switched **off** in the app, so it isn't the
 feature being active that locks the registers. Unlike the Mode Scheduler, where the *shape* of a write
 matters, no shape was accepted here.
