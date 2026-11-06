@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v6.0.3
       - name: Patch manifest and zip
         run: |
-          TAG=${{ github.ref_NAME }}
+          TAG=${{ github.ref_name }}
           cd custom_components/foxess_modbus/
           jq ".version=\"${TAG#v}\"" manifest.json > manifest.json.tmp
           mv manifest.json.tmp manifest.json

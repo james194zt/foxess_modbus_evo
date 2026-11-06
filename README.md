@@ -10,7 +10,7 @@
 
 A Home Assistant custom component which communicates with FoxESS inverters locally via Modbus (no cloud).
 
-**This fork** ([james194zt/foxess_modbus_evo](https://github.com/james194zt/foxess_modbus_evo)) adds **FoxESS EVO 10-H** support on the markybry register map: charge periods **48010–48023**, BMS pack sensors (**37609–37632**), corrected SOC/SoH, EPS/load power, and computed remaining kWh. See [docs/INSTALL_HA.md](docs/INSTALL_HA.md) for Raspberry Pi / HA OS install steps.
+**This maintained fork** ([chippy1402/foxess_modbus_evo](https://github.com/chippy1402/foxess_modbus_evo)) is based on [james194zt/foxess_modbus_evo](https://github.com/james194zt/foxess_modbus_evo). It adds **FoxESS EVO 10-H** support on the markybry register map: charge periods **48010–48023**, BMS pack sensors (**37609–37632**), corrected SOC/SoH, EPS/load power, and computed remaining kWh. See [docs/INSTALL_HA.md](docs/INSTALL_HA.md) for Raspberry Pi / HA OS install steps.
 
 HA domain: **`foxess_modbus`** — integration name **FoxESS - Modbus** (not `foxess_modbus_evo`).
 
@@ -38,7 +38,7 @@ See the documentation for details.
 This fork installs from **source** (no `zip_release`) so commit-based testing works without a GitHub release zip. Upstream uses tagged zip releases instead — see [docs/FORK_HACS.md](docs/FORK_HACS.md). Contributing EVO changes back upstream: [docs/UPSTREAM_PR.md](docs/UPSTREAM_PR.md).
 
 1. HACS → **⋮** → **Custom repositories**
-2. URL: `https://github.com/james194zt/foxess_modbus_evo` — category **Integration**
+2. URL: `https://github.com/chippy1402/foxess_modbus_evo` — category **Integration**
 3. Install **FoxESS - Modbus**, restart Home Assistant
 4. **Settings → Devices & services → Add integration → FoxESS - Modbus**
 5. EVO 10-H: connection **AUX**, holding registers
@@ -90,8 +90,8 @@ Sets all charge periods in one service call. The service "Update Charge Period" 
 [buymecoffee]: https://www.buymeacoffee.com/nathanmarlor
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
 [hacs]: https://hacs.xyz
-[my-hacs]: https://my.home-assistant.io/redirect/hacs_repository/?owner=nathanmarlor&repository=foxess_modbus&category=integration
+[my-hacs]: https://my.home-assistant.io/redirect/hacs_repository/?owner=chippy1402&repository=foxess_modbus_evo&category=integration
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[releases-shield]: https://img.shields.io/github/release/nathanmarlor/foxess_modbus.svg?style=for-the-badge
-[releases]: https://github.com/nathanmarlor/foxess_modbus/releases
+[releases-shield]: https://img.shields.io/github/release/chippy1402/foxess_modbus_evo.svg?style=for-the-badge
+[releases]: https://github.com/chippy1402/foxess_modbus_evo/releases

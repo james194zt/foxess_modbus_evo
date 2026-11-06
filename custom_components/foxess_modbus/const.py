@@ -5,7 +5,7 @@ NAME = "foxess_modbus"
 DOMAIN = "foxess_modbus"
 DOMAIN_DATA = f"{DOMAIN}_data"
 
-ISSUE_URL = "https://github.com/nathanmarlor/foxess_modbus/issues"
+ISSUE_URL = "https://github.com/chippy1402/foxess_modbus_evo/issues"
 
 # Icons
 ICON = "mdi:format-quote-close"

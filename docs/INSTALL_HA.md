@@ -1,6 +1,6 @@
 # Installing foxess_modbus on Home Assistant (EVO 10-H)
 
-This repo ([james194zt/foxess_modbus_evo](https://github.com/james194zt/foxess_modbus_evo)) ships the **markybry** EVO register map as HA domain **`foxess_modbus`** (“FoxESS - Modbus”), plus EVO 10-H BMS, SOC/SoH, EPS, and load entities validated on a live unit.
+This repo ([chippy1402/foxess_modbus_evo](https://github.com/chippy1402/foxess_modbus_evo)) ships the **markybry** EVO register map as HA domain **`foxess_modbus`** (“FoxESS - Modbus”), plus EVO 10-H BMS, SOC/SoH, EPS, and load entities validated on a live unit.
 
 **Upstream basis:** [markybry/foxess_modbus_EVO @ `feature/evo-10h-fixes`](https://github.com/markybry/foxess_modbus_EVO/tree/feature/evo-10h-fixes)
 
@@ -48,7 +48,7 @@ To update later, replace that folder with a fresh copy of the branch and restart
 HACS installs from the default branch unless you use a release. For `feature/evo-10h-fixes`:
 
 1. HACS → **⋮** → **Custom repositories**
-2. Repository: `https://github.com/james194zt/foxess_modbus_evo`
+2. Repository: `https://github.com/chippy1402/foxess_modbus_evo`
 3. Category: **Integration**
 4. Install **FoxESS - Modbus**
 

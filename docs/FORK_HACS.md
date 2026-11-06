@@ -13,7 +13,7 @@ GitHub Actions builds `foxess_modbus.zip` when a **version tag** is pushed. Inst
 
 ## Install via HACS (fork)
 
-1. Custom repository: `https://github.com/james194zt/foxess_modbus_evo`
+1. Custom repository: `https://github.com/chippy1402/foxess_modbus_evo`
 2. Category: Integration
 3. Install / Redownload **FoxESS - Modbus** from `main`
 4. Restart Home Assistant
