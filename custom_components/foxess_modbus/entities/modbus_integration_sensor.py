@@ -122,6 +122,9 @@ class ModbusIntegrationSensor(ModbusEntityMixin, IntegrationSensor):
             "unit_time": unit_time,
             "max_sub_interval": MAX_SUB_INTERVAL,
         }
+        # HA 2026.11 added a required 'device_class'; None keeps deriving it from the source sensor (power -> energy)
+        if "device_class" in signature.parameters:
+            kwargs["device_class"] = None
 
         IntegrationSensor.__init__(*positional, **kwargs)  # type: ignore[arg-type]
 
